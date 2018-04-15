@@ -29,61 +29,6 @@ public class DeviceList extends AppCompatActivity {
 
     ListView devicelist;
     BluetoothAdapter myBluetooth;
-    BluetoothSocket btSocket;
-    boolean isBtConnected;
-
-    private AdapterView.OnItemClickListener myListClickListener = new AdapterView.OnItemClickListener()
-    {
-        public void onItemClick (AdapterView av, View v, int arg2, long arg3)
-        {
-            // Get the device MAC remoteBTAddress, the last 17 chars in the View
-            String info = ((TextView) v).getText().toString();
-            String address = info.substring(info.length() - 17);
-            // Make an intent to start next activity.
-            myBluetooth = BluetoothAdapter.getDefaultAdapter();
-            BluetoothDevice remote = myBluetooth.getRemoteDevice(address);
-            if (remote != null){
-                myBluetooth.cancelDiscovery();
-                BluetoothConnector btc = new BluetoothConnector(remote,true,myBluetooth);
-                try {
-                    btSocket = btc.connect().getUnderlyingSocket();
-                }
-                catch(IOException e) {
-                    try {
-                        BluetoothSocket bluetoothSocket = (BluetoothSocket) remote.getClass().getMethod("createRfcommSocket", new Class[]{int.class}).invoke(remote, 1);
-                        bluetoothSocket.connect();
-                        isBtConnected = true;
-                    } catch (NoSuchMethodException e1) {
-                        Log.w("BT", "No such method found", e1);
-                    } catch (IllegalAccessException e1) {
-                        e1.printStackTrace();
-                    } catch (InvocationTargetException e1) {
-                        e1.printStackTrace();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                    Intent i = new Intent(DeviceList.this, StartMenu.class);
-                    i.putExtra("info",e.toString());
-                    startActivity(i);
-                }
-                if (btSocket != null) {
-                    if (btSocket.isConnected()) {
-                        Intent i = new Intent(DeviceList.this, StartMenu.class);
-                        i.putExtra("info","Bluetooth Socket Connected");
-                        startActivity(i);
-                    }
-                }
-
-            }
-            else{
-                Intent j = new Intent(DeviceList.this, StartMenu.class);
-                j.putExtra("missedRemoteInfo",info);
-                startActivity(j);
-            }
-
-
-        }
-    };
 
 
     @Override
@@ -128,6 +73,36 @@ public class DeviceList extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "Could not Communicate with Start Menu.", Toast.LENGTH_LONG).show();
         }
     }
+
+
+    private AdapterView.OnItemClickListener myListClickListener = new AdapterView.OnItemClickListener()
+    {
+        public void onItemClick (AdapterView av, View v, int arg2, long arg3)
+        {
+            // Get the device MAC remoteBTAddress, the last 17 chars in the View
+            String info = ((TextView) v).getText().toString();
+            String address = info.substring(info.length() - 17);
+            // Make an intent to start next activity.
+            myBluetooth = BluetoothAdapter.getDefaultAdapter();
+            BluetoothDevice remote = myBluetooth.getRemoteDevice(address);
+
+            if (remote != null) {
+                Intent i = new Intent(DeviceList.this, BluetoothConnectionService.class);
+                i.putExtra("info",info);
+                i.putExtra("address",address);
+                i.setAction(Intent.ACTION_SEND);
+                startService(i);
+            }
+            else{
+                Intent j = new Intent(DeviceList.this, StartMenu.class);
+                j.putExtra("missedRemoteInfo",info);
+                startActivity(j);
+            }
+
+
+
+        }
+    };
 
 
 }

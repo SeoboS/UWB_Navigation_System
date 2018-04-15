@@ -54,7 +54,6 @@ public class TrilaterationData extends AppCompatActivity {
     private BluetoothDevice remote;
     private String remoteBTAddress;
     private ProgressDialog progress;
-    private BluetoothSocket btSocket = null;
     boolean isBtConnected = false;
     private UserLocation userLocation = new UserLocation();
 
@@ -67,55 +66,7 @@ public class TrilaterationData extends AppCompatActivity {
         btDataView = (TextView)findViewById(R.id.btDataView);
         userCoord = (TextView)findViewById(R.id.userCoord);
         btDataView.setMovementMethod(new ScrollingMovementMethod());
-
-        myBluetooth = BluetoothAdapter.getDefaultAdapter();
-        if ( myBluetooth != null ){
-
-            Intent i = this.getIntent();
-            remoteBTAddress = i.getStringExtra("remoteBTAddress");
-            String info = i.getStringExtra("info");
-            remote = myBluetooth.getRemoteDevice(remoteBTAddress);
-            if (remote != null){
-                myBluetooth.cancelDiscovery();
-                //new ConnectBT().execute(); // TODO: returns back to start menu screen
-                BluetoothConnector btc = new BluetoothConnector(remote,true,myBluetooth);
-                try {
-                    btSocket = btc.connect().getUnderlyingSocket();
-                }
-                catch(IOException e) {
-                    try {
-                        BluetoothSocket bluetoothSocket = (BluetoothSocket) remote.getClass().getMethod("createRfcommSocket", new Class[]{int.class}).invoke(remote, 1);
-                        bluetoothSocket.connect();
-                        isBtConnected = true;
-                    } catch (NoSuchMethodException e1) {
-                        Log.w("BT", "No such method found", e1);
-                    } catch (IllegalAccessException e1) {
-                        e1.printStackTrace();
-                    } catch (InvocationTargetException e1) {
-                        e1.printStackTrace();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                    textStatus.setText(e.toString());
-                }
-                if (btSocket != null) {
-                    if (btSocket.isConnected()) {
-                        textStatus.setText("Bluetooth Socket Connected");
-                    }
-                }
-
-            }
-            else{
-                Intent j = new Intent(this, StartMenu.class);
-                j.putExtra("missedRemoteInfo",info);
-                startActivity(j);
-            }
-        }
-        else{
-            Intent i = new Intent(this,StartMenu.class);
-            startActivity(i);
-        }
-
+        Bundle b = this.getIntent().getExtras();
 
         userLocation.setListener(new UserLocation.ChangeListener() { // everytime coordinates are updated, change value
             @Override
@@ -126,64 +77,65 @@ public class TrilaterationData extends AppCompatActivity {
         });
     }
 
-    //UI Thread
-    private class ConnectBT extends AsyncTask<Void, Void, Void>{
-        private boolean ConnectSuccess = true; //if it's here, it's almost connected
-
-        @Override
-        protected void onPreExecute()
-        {
-            progress = ProgressDialog.show(TrilaterationData.this, "Connecting...", "Please wait");  //show a progress dialog
-        }
-
-        @Override
-        protected Void doInBackground(Void... devices) //while the progress dialog is shown, the connection is done in background
-        {
-            myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
-            BluetoothDevice remote = myBluetooth.getRemoteDevice(remoteBTAddress);//connects to the device's remoteBTAddress and checks if it's available
-            ParcelUuid[] uuids = remote.getUuids();
-            Random r = new Random(System.currentTimeMillis());
-
-            int tries = 0;
-            while(tries < 4) {
-                try {
-
-                    if (btSocket == null || !isBtConnected) {
-                        btSocket = remote.createRfcommSocketToServiceRecord(uuids[r.nextInt(uuids.length)].getUuid());//create a RFCOMM (SPP) connection
-                        BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
-                        btSocket.connect();//start connection - works!
-                        btSocket.getOutputStream().write(1);
-                        btSocket.getOutputStream().flush();
-                        tries = 0;
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    ConnectSuccess = false; //if the try failed, you can check the exception here
-                    ++tries;
-                }
-            }
-            return null;
-        }
-        @Override
-        protected void onPostExecute(Void result) //after the doInBackground, it checks if everything went fine
-        {
-            super.onPostExecute(result);
-            TextView t = (TextView) findViewById(R.id.status);
-            if (!ConnectSuccess)
-            {
-                t.setText("Connection Failed. Is it a SPP Bluetooth? Try again.");
-                finish();
-            }
-            else
-            {
-                t.setText("Connected.");
-                isBtConnected = true;
-            }
-            progress.dismiss();
-        }
-    }
+//    //UI Thread
+//    private class ConnectBT extends AsyncTask<Void, Void, Void>{
+//        private boolean ConnectSuccess = true; //if it's here, it's almost connected
+//
+//        @Override
+//        protected void onPreExecute()
+//        {
+//            progress = ProgressDialog.show(TrilaterationData.this, "Connecting...", "Please wait");  //show a progress dialog
+//        }
+//
+//        @Override
+//        protected Void doInBackground(Void... devices) //while the progress dialog is shown, the connection is done in background
+//        {
+//            myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
+//            BluetoothDevice remote = myBluetooth.getRemoteDevice(remoteBTAddress);//connects to the device's remoteBTAddress and checks if it's available
+//            ParcelUuid[] uuids = remote.getUuids();
+//            Random r = new Random(System.currentTimeMillis());
+//
+//            int tries = 0;
+//            while(tries < 4) {
+//                try {
+//
+//                    if (btSocket == null || !isBtConnected) {
+//                        btSocket = remote.createRfcommSocketToServiceRecord(uuids[r.nextInt(uuids.length)].getUuid());//create a RFCOMM (SPP) connection
+//                        BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
+//                        btSocket.connect();//start connection - works!
+//                        btSocket.getOutputStream().write(1);
+//                        btSocket.getOutputStream().flush();
+//                        tries = 0;
+//                    }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    ConnectSuccess = false; //if the try failed, you can check the exception here
+//                    ++tries;
+//                }
+//            }
+//            return null;
+//        }
+//        @Override
+//        protected void onPostExecute(Void result) //after the doInBackground, it checks if everything went fine
+//        {
+//            super.onPostExecute(result);
+//            TextView t = (TextView) findViewById(R.id.status);
+//            if (!ConnectSuccess)
+//            {
+//                t.setText("Connection Failed. Is it a SPP Bluetooth? Try again.");
+//                finish();
+//            }
+//            else
+//            {
+//                t.setText("Connected.");
+//                isBtConnected = true;
+//            }
+//            progress.dismiss();
+//        }
+//    }
 
     public void readBTData(View v){
+        BluetoothSocket btSocket = BluetoothConnectionService.getSocket();
         if(btSocket.isConnected()) {
             try {
                 InputStream i = btSocket.getInputStream();
@@ -287,32 +239,6 @@ public class TrilaterationData extends AppCompatActivity {
         nonLinearOptimum = nlSolver.solve();
         double[] centroid = nonLinearOptimum.getPoint().toArray();
         userLocation.setLocation(centroid);
-    }
-
-    public void disconnect()
-    {
-        if (btSocket!=null) //If the btSocket is busy
-        {
-            try
-            {
-                btSocket.getInputStream().close();
-                btSocket.close(); //close connection
-            }
-            catch (IOException e)
-            { textStatus.setText("Error");}
-        }
-        finish(); //return to the first layout
-    }
-    @Override
-    protected void onDestroy() {
-        if (btSocket!=null){
-            try {
-                btSocket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        super.onDestroy();
     }
 
 }

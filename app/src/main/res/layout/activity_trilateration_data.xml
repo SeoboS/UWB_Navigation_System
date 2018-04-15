@@ -29,7 +29,7 @@
         android:layout_marginRight="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:maxLines = ""
+        android:maxLines = "200"
         android:scrollbars="vertical"
         android:background="@drawable/border"
         android:text=""

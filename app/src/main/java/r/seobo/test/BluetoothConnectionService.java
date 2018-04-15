@@ -1,52 +1,90 @@
 package r.seobo.test;
+
+import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import android.content.Intent;
+import android.os.IBinder;
+import android.os.ParcelUuid;
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
-import android.os.ParcelUuid;
-import android.util.Log;
-
-public class BluetoothConnector {
+public class BluetoothConnectionService extends Service {
 
     private BluetoothSocketWrapper bluetoothSocket;
-    private BluetoothDevice device;
     private boolean secure;
-    private BluetoothAdapter adapter;
-    private ParcelUuid[] uuidCandidates;
+    private BluetoothAdapter myBluetooth;
     private int candidate;
     private BluetoothDevice remote;
+    private static BluetoothSocket socket;
+    private ParcelUuid[] uuidCandidates;
 
 
+    public BluetoothConnectionService() {
 
-    /**
-     * @param device the device
-     * @param secure if connection should be done via a secure socket
-     * @param adapter the Android BT adapter
-     */
-    public BluetoothConnector(BluetoothDevice device, boolean secure, BluetoothAdapter adapter) {
-        this.device = device;
-        this.secure = secure;
-        this.adapter = adapter;
-        if (this.uuidCandidates == null || this.uuidCandidates.length == 0) {
-            this.uuidCandidates = device.getUuids();
-        }
     }
 
-    public BluetoothSocketWrapper connect() throws IOException {
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId){
+        String info = intent.getStringExtra("info");
+        String address = intent.getStringExtra("address");
+        myBluetooth = BluetoothAdapter.getDefaultAdapter();
+        remote = myBluetooth.getRemoteDevice(address);
+        uuidCandidates = remote.getUuids();
+        try {
+            this.setSocket(connect().getUnderlyingSocket());
+            Intent i = new Intent(BluetoothConnectionService.this, StartMenu.class);
+            i.putExtra("info","Bluetooth Socket connected");
+            startActivity(i);
+        }catch(IOException e) {
+            Intent i = new Intent(BluetoothConnectionService.this, StartMenu.class);
+            i.putExtra("info",e.toString());
+            startActivity(i);
+        }
+
+        return START_STICKY;
+    }
+
+    @Override
+    public void onCreate() {
+
+
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        // TODO: Return the communication channel to the service.
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        //BluetoothSocket btSocket = BluetoothConnector.getSocket();
+        BluetoothConnectionService.disconnect();
+    }
+
+    public static synchronized void setSocket(BluetoothSocket s){
+        BluetoothConnectionService.socket = s;
+    }
+
+    public static synchronized BluetoothSocket getSocket(){
+        return BluetoothConnectionService.socket;
+    }
+
+    public BluetoothSocketWrapper connect() throws IOException{
         boolean success = false;
         while (selectSocket()) {
-            adapter.cancelDiscovery();
+            myBluetooth.cancelDiscovery();
             if (!bluetoothSocket.getUnderlyingSocket().isConnected()) {
                 try {
-
                     bluetoothSocket.connect();
                     bluetoothSocket.getOutputStream().write(1);
                     bluetoothSocket.getOutputStream().flush();
@@ -73,12 +111,17 @@ public class BluetoothConnector {
                 }
             }
             else{
-                break;
+                if (socket.isConnected()) {
+                    Intent i = new Intent(BluetoothConnectionService.this, StartMenu.class);
+                    i.putExtra("info", "Bluetooth Socket Connected");
+                    startActivity(i);
+                    break;
+                }
             }
         }
 
         if (!success) {
-            throw new IOException("Could not connect to device: "+ device.getAddress());
+            throw new IOException("Could not connect to device: "+ remote.getAddress());
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(){public void run(){
@@ -92,7 +135,7 @@ public class BluetoothConnector {
     }
 
     private boolean selectSocket() throws IOException {
-        if (candidate >= uuidCandidates.length) {
+        if (candidate >= uuidCandidates.length) { /// exception with the null length here
             return false;
         }
 
@@ -101,9 +144,9 @@ public class BluetoothConnector {
 
         Log.i("BT", "Attempting to connect to Protocol: "+ uuid);
         if (secure) {
-            tmp = device.createRfcommSocketToServiceRecord(uuid);
+            tmp = remote.createRfcommSocketToServiceRecord(uuid);
         } else {
-            tmp = device.createInsecureRfcommSocketToServiceRecord(uuid);
+            tmp = remote.createInsecureRfcommSocketToServiceRecord(uuid);
         }
         bluetoothSocket = new NativeBluetoothSocket(tmp);
 
@@ -127,7 +170,6 @@ public class BluetoothConnector {
         BluetoothSocket getUnderlyingSocket();
 
     }
-
 
     public static class NativeBluetoothSocket implements BluetoothSocketWrapper {
 
@@ -230,4 +272,36 @@ public class BluetoothConnector {
         }
 
     }
+
+    public static void disconnect(){
+        if (socket!=null) //If the btSocket is busy
+        {
+            try
+            {
+                socket.getInputStream().close();
+                socket.close(); //close connection
+                OutputStream os = BluetoothConnectionService.getSocket().getOutputStream();
+                if (os != null) {
+                    try{
+                        os.close();
+                    } catch (Exception e){
+                        os = null;
+                    }
+                }
+                InputStream is = socket.getInputStream();
+                if (is != null) {
+                    try{
+                        is.close();
+                    } catch (Exception e){
+                        is = null;
+                    }
+                }
+            }
+            catch (IOException e) {
+                Log.d("BluetoothConnector",e.toString());
+            }
+        }
+        //finish(); //return to the first layout
+    }
+
 }
