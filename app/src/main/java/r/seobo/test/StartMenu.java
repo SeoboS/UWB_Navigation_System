@@ -10,11 +10,6 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
-import com.lemmingapex.trilateration.TrilaterationFunction;
-import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
-import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer.Optimum;
-
 import java.util.ArrayList;
 
 public class StartMenu extends AppCompatActivity {
@@ -28,7 +23,7 @@ public class StartMenu extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_start_menu);
 
         // Example of a call to a native method
         b1 = findViewById(R.id.button);
@@ -109,6 +104,11 @@ public class StartMenu extends AppCompatActivity {
             i.putExtras(b);
             startActivity(i);
         }
+    }
+
+    public void startNavigation(View v){
+        Intent i = new Intent(this, MainNavigation.class);
+        startActivity(i);
     }
 
     public void getData(View v){

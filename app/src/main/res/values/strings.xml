@@ -15,7 +15,7 @@
     -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
-    <string name="app_name">test</string>
+    <string name="app_name">UWBNav</string>
     <string name="title_activity_device_list">DeviceList</string>
 
     <string name="bluetooth_connected">Bluetooth device connected:</string>
@@ -41,5 +41,17 @@
     <string name="secure_connect">Connect a device - Secure</string>
     <string name="insecure_connect">Connect a device - Insecure</string>
     <string name="discoverable">Make discoverable</string>
+
+    <string-array name="Room_Array_1">
+        <item>Room 0</item>
+        <item>Room 1</item>
+        <item>Room 2</item>
+        <item>Room 3</item>
+        <item>Room 4</item>
+        <item>Room 5</item>
+        <item>Room 6</item>
+        <item>Room 7</item>
+        <item>Room 8</item>
+    </string-array>
 
 </resources>
