@@ -1,15 +1,15 @@
 package r.seobo.test;
 
+import android.app.ActionBar;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -17,19 +17,22 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+
+
+
+import static r.seobo.test.Constants.*;
 
 public class DeviceList extends AppCompatActivity {
 
     ListView devicelist;
     BluetoothAdapter myBluetooth;
-
+    private String mConnectedDeviceName;
+    /**
+     * Array adapter for the conversation thread
+     */
+    private ArrayAdapter<String> mConversationArrayAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,19 +82,22 @@ public class DeviceList extends AppCompatActivity {
     {
         public void onItemClick (AdapterView av, View v, int arg2, long arg3)
         {
+
             // Get the device MAC remoteBTAddress, the last 17 chars in the View
             String info = ((TextView) v).getText().toString();
             String address = info.substring(info.length() - 17);
+            String deviceName = info.substring(0,info.length() - 17);
             // Make an intent to start next activity.
             myBluetooth = BluetoothAdapter.getDefaultAdapter();
             BluetoothDevice remote = myBluetooth.getRemoteDevice(address);
 
             if (remote != null) {
-                Intent i = new Intent(DeviceList.this, BluetoothConnectionService.class);
-                i.putExtra("info",info);
+                // send address and start bluetooth service
+                Intent i = new Intent(DeviceList.this, TrilaterationData.class);
+                i.putExtra("deviceName",deviceName);
                 i.putExtra("address",address);
                 i.setAction(Intent.ACTION_SEND);
-                startService(i);
+                startActivity(i);
             }
             else{
                 Intent j = new Intent(DeviceList.this, StartMenu.class);
@@ -101,6 +107,92 @@ public class DeviceList extends AppCompatActivity {
 
 
 
+        }
+    };
+
+    /**
+     * Updates the status on the action bar.
+     *
+     * @param resId a string resource ID
+     */
+    private void setStatus(int resId) {
+        Activity activity = this;
+        if (null == activity) {
+            return;
+        }
+        final ActionBar actionBar = activity.getActionBar();
+        if (null == actionBar) {
+            return;
+        }
+        actionBar.setSubtitle(resId);
+    }
+
+    /**
+     * Updates the status on the action bar.
+     *
+     * @param subTitle status
+     */
+    private void setStatus(CharSequence subTitle) {
+        Activity activity = this;
+        if (null == activity) {
+            return;
+        }
+        final ActionBar actionBar = activity.getActionBar();
+        if (null == actionBar) {
+            return;
+        }
+        actionBar.setSubtitle(subTitle);
+    }
+
+    /**
+     * The Handler that gets information back from the Bluetooth Service*/
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            Activity activity = DeviceList.this;
+            switch (msg.what) {
+                case Constants.MESSAGE_STATE_CHANGE:
+                    switch (msg.arg1) {
+                        case STATE_CONNECTED:
+                            setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
+                            mConversationArrayAdapter.clear();
+                            break;
+                        case STATE_CONNECTING:
+                            setStatus(R.string.title_connecting);
+                            break;
+                        case STATE_LISTEN:
+                        case STATE_NONE:
+                            setStatus(R.string.title_not_connected);
+                            break;
+                    }
+                    break;
+                case Constants.MESSAGE_WRITE:
+                    byte[] writeBuf = (byte[]) msg.obj;
+                    // construct a string from the buffer
+                    String writeMessage = new String(writeBuf);
+                    mConversationArrayAdapter.add("Me:  " + writeMessage);
+                    break;
+                case Constants.MESSAGE_READ:
+                    byte[] readBuf = (byte[]) msg.obj;
+                    // construct a string from the valid bytes in the buffer
+                    String readMessage = new String(readBuf, 0, msg.arg1);
+                    mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
+                    break;
+                case Constants.MESSAGE_DEVICE_NAME:
+                    // save the connected device's name
+                    mConnectedDeviceName = msg.getData().getString(Constants.DEVICE_NAME);
+                    if (null != activity) {
+                        Toast.makeText(activity, "Connected to "
+                                + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+                case Constants.MESSAGE_TOAST:
+                    if (null != activity) {
+                        Toast.makeText(activity, msg.getData().getString(Constants.TOAST),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+            }
         }
     };
 

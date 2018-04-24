@@ -1,12 +1,16 @@
 package r.seobo.test;
 
 
+import android.app.ActionBar;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Message;
 import android.os.ParcelUuid;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,6 +18,7 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
 import com.lemmingapex.trilateration.TrilaterationFunction;
@@ -29,6 +34,11 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Random;
 import java.util.Scanner;
+
+import static r.seobo.test.Constants.STATE_CONNECTED;
+import static r.seobo.test.Constants.STATE_CONNECTING;
+import static r.seobo.test.Constants.STATE_LISTEN;
+import static r.seobo.test.Constants.STATE_NONE;
 
 public class TrilaterationData extends AppCompatActivity {
 
@@ -55,6 +65,14 @@ public class TrilaterationData extends AppCompatActivity {
     private ProgressDialog progress;
     boolean isBtConnected = false;
     private UserLocation userLocation = new UserLocation();
+    private String mConnectedDeviceName;
+    private BluetoothCoordinateService bts;
+    private String address;
+    private String deviceName;
+    /**
+     * Array adapter for the conversation thread
+     */
+    private ArrayAdapter<String> mConversationArrayAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +83,13 @@ public class TrilaterationData extends AppCompatActivity {
         btDataView = (TextView)findViewById(R.id.btDataView);
         userCoord = (TextView)findViewById(R.id.userCoord);
         btDataView.setMovementMethod(new ScrollingMovementMethod());
-        Bundle b = this.getIntent().getExtras();
+
+        Intent i = this.getIntent();
+        deviceName = i.getStringExtra("deviceName");
+        address = i.getStringExtra("address");
+        myBluetooth = BluetoothAdapter.getDefaultAdapter();
+        bts = new BluetoothCoordinateService(this,mHandler);
+        bts.connect(myBluetooth.getRemoteDevice(address),true);
 
         userLocation.setListener(new UserLocation.ChangeListener() { // everytime coordinates are updated, change value
             @Override
@@ -76,62 +100,93 @@ public class TrilaterationData extends AppCompatActivity {
         });
     }
 
-//    //UI Thread
-//    private class ConnectBT extends AsyncTask<Void, Void, Void>{
-//        private boolean ConnectSuccess = true; //if it's here, it's almost connected
-//
-//        @Override
-//        protected void onPreExecute()
-//        {
-//            progress = ProgressDialog.show(TrilaterationData.this, "Connecting...", "Please wait");  //show a progress dialog
-//        }
-//
-//        @Override
-//        protected Void doInBackground(Void... devices) //while the progress dialog is shown, the connection is done in background
-//        {
-//            myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
-//            BluetoothDevice remote = myBluetooth.getRemoteDevice(remoteBTAddress);//connects to the device's remoteBTAddress and checks if it's available
-//            ParcelUuid[] uuids = remote.getUuids();
-//            Random r = new Random(System.currentTimeMillis());
-//
-//            int tries = 0;
-//            while(tries < 4) {
-//                try {
-//
-//                    if (btSocket == null || !isBtConnected) {
-//                        btSocket = remote.createRfcommSocketToServiceRecord(uuids[r.nextInt(uuids.length)].getUuid());//create a RFCOMM (SPP) connection
-//                        BluetoothAdapter.getDefaultAdapter().cancelDiscovery();
-//                        btSocket.connect();//start connection - works!
-//                        btSocket.getOutputStream().write(1);
-//                        btSocket.getOutputStream().flush();
-//                        tries = 0;
-//                    }
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                    ConnectSuccess = false; //if the try failed, you can check the exception here
-//                    ++tries;
-//                }
-//            }
-//            return null;
-//        }
-//        @Override
-//        protected void onPostExecute(Void result) //after the doInBackground, it checks if everything went fine
-//        {
-//            super.onPostExecute(result);
-//            TextView t = (TextView) findViewById(R.id.status);
-//            if (!ConnectSuccess)
-//            {
-//                t.setText("Connection Failed. Is it a SPP Bluetooth? Try again.");
-//                finish();
-//            }
-//            else
-//            {
-//                t.setText("Connected.");
-//                isBtConnected = true;
-//            }
-//            progress.dismiss();
-//        }
-//    }
+
+    /**
+     * Updates the status on the action bar.
+     *
+     * @param resId a string resource ID
+     */
+    private void setStatus(int resId) {
+        Activity activity = this;
+        if (null == activity) {
+            return;
+        }
+        final ActionBar actionBar = activity.getActionBar();
+        if (null == actionBar) {
+            return;
+        }
+        actionBar.setSubtitle(resId);
+    }
+
+    /**
+     * Updates the status on the action bar.
+     *
+     * @param subTitle status
+     */
+    private void setStatus(CharSequence subTitle) {
+        Activity activity = this;
+        if (null == activity) {
+            return;
+        }
+        final ActionBar actionBar = activity.getActionBar();
+        if (null == actionBar) {
+            return;
+        }
+        actionBar.setSubtitle(subTitle);
+    }
+
+
+    /**
+     * The Handler that gets information back from the Bluetooth Service*/
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            Activity activity = TrilaterationData.this;
+            switch (msg.what) {
+                case Constants.MESSAGE_STATE_CHANGE:
+                    switch (msg.arg1) {
+                        case STATE_CONNECTED:
+                            setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
+                            mConversationArrayAdapter.clear();
+                            break;
+                        case STATE_CONNECTING:
+                            setStatus(R.string.title_connecting);
+                            break;
+                        case STATE_LISTEN:
+                        case STATE_NONE:
+                            setStatus(R.string.title_not_connected);
+                            break;
+                    }
+                    break;
+                case Constants.MESSAGE_WRITE:
+                    byte[] writeBuf = (byte[]) msg.obj;
+                    // construct a string from the buffer
+                    String writeMessage = new String(writeBuf);
+                    mConversationArrayAdapter.add("Me:  " + writeMessage);
+                    break;
+                case Constants.MESSAGE_READ:
+                    byte[] readBuf = (byte[]) msg.obj;
+                    // construct a string from the valid bytes in the buffer
+                    String readMessage = new String(readBuf, 0, msg.arg1);
+                    mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
+                    break;
+                case Constants.MESSAGE_DEVICE_NAME:
+                    // save the connected device's name
+                    mConnectedDeviceName = msg.getData().getString(Constants.DEVICE_NAME);
+                    if (null != activity) {
+                        Toast.makeText(activity, "Connected to "
+                                + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+                case Constants.MESSAGE_TOAST:
+                    if (null != activity) {
+                        Toast.makeText(activity, msg.getData().getString(Constants.TOAST),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+            }
+        }
+    };
 
     public void readBTData(View v){
         BluetoothSocket btSocket = BluetoothConnectionService.getSocket();
@@ -218,7 +273,7 @@ public class TrilaterationData extends AppCompatActivity {
      * @param d2    distance between tag and second anchor
      * @param d3    distance between tag and third anchor
      */
-    public void saveDistData(double d1, double d2, double d3){
+    private void saveDistData(double d1, double d2, double d3){
         //gotta figure out how to store this data
         // this is preliminary, just the original
         double[] d = {d1,d2,d3};
@@ -229,7 +284,7 @@ public class TrilaterationData extends AppCompatActivity {
     /**
      * Trilaterate based on 2D positions and distances.
      */
-    public void trilaterate(double[][] positions, double[] distances) {
+    private void trilaterate(double[][] positions, double[] distances) {
         TrilaterationFunction trilaterationFunction = new TrilaterationFunction(positions, distances);
 
         NonLinearLeastSquaresSolver nlSolver = new NonLinearLeastSquaresSolver(trilaterationFunction, new LevenbergMarquardtOptimizer());

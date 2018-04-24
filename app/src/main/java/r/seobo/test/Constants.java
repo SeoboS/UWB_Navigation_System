@@ -21,4 +21,5 @@ public interface Constants {
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
 
 
+
 }

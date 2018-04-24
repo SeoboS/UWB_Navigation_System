@@ -37,8 +37,12 @@
         <service
             android:name=".BluetoothConnectionService"
             android:enabled="true"
-            android:exported="true">
-        </service>>
+            android:exported="true"></service>
+        >
+        <service
+            android:name=".BluetoothCoordinateService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 
 </manifest>
