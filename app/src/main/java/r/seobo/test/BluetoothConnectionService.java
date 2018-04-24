@@ -40,12 +40,15 @@ public class BluetoothConnectionService extends Service {
         uuidCandidates = remote.getUuids();
         try {
             this.setSocket(connect().getUnderlyingSocket());
+
+
             Intent i = new Intent(BluetoothConnectionService.this, StartMenu.class);
             i.putExtra("info","Bluetooth Socket connected");
             startActivity(i);
         }catch(IOException e) {
             Intent i = new Intent(BluetoothConnectionService.this, StartMenu.class);
-            i.putExtra("info",e.toString());
+            i.putExtra("info",e.getMessage());
+
             startActivity(i);
         }
 
