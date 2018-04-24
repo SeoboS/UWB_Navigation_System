@@ -38,7 +38,7 @@
             android:name=".BluetoothConnectionService"
             android:enabled="true"
             android:exported="true">
-        </service>
+        </service>>
     </application>
 
 </manifest>
