@@ -22,7 +22,7 @@ public class NaviActivity extends AppCompatActivity {
         final TextView userCoord = (TextView)findViewById(R.id.userCoord);
         initSpinners();
         N1 = new MainNavigation();
-
+/*
         userLocation.setListener(new UserLocation.ChangeListener() { // everytime coordinates are updated, change value
             @Override
             public void onChange() {
@@ -38,7 +38,7 @@ public class NaviActivity extends AppCompatActivity {
                 t2.setText(N1.pathToString());
             }
         });
-
+*/
     }
 
 
@@ -65,12 +65,23 @@ public class NaviActivity extends AppCompatActivity {
     }
 
     public void Button2(View v) {
+        TextView t1 = (TextView)findViewById(R.id.textView1);
         TextView t2 = (TextView)findViewById(R.id.textView2);
         EditText e1 = (EditText)findViewById(R.id.editText1);
         EditText e2 = (EditText)findViewById(R.id.editText2);
         int int1 = Integer.parseInt(e1.getText().toString());
         int int2 = Integer.parseInt(e2.getText().toString());
-        N1.navigate(int1,int2);
+        int res = N1.navigate(int1,int2);
+        String res2 = "No current destination!";
+        if(res == 2)
+            res2 = "Location unchanged!";
+        if(res == 3)
+            res2 = "You have arrived at your destination!";
+        if(res == 4)
+            res2 = "You have made progress towards your destination!";
+        if(res == 5)
+            res2 = "Wrong way! New path to destination displayed!";
+        t1.setText(res2);
         t2.setText(N1.pathToString());
     }
 

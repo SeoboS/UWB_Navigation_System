@@ -30,7 +30,7 @@
 
     <Spinner
         android:id="@+id/spinner1"
-        android:layout_width="133dp"
+        android:layout_width="154dp"
         android:layout_height="48dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -41,7 +41,7 @@
 
     <Spinner
         android:id="@+id/spinner2"
-        android:layout_width="134dp"
+        android:layout_width="161dp"
         android:layout_height="48dp"
         android:layout_marginLeft="8dp"
         android:layout_marginStart="8dp"

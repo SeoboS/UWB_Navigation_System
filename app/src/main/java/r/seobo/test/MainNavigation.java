@@ -270,19 +270,19 @@ public class MainNavigation implements Serializable{
         return -1;
     }
 
-    public void navigate(int x, int y){
+    public int navigate(int x, int y){
         current_x = x;
         current_y = y;
         int temp_current_vertex = findVertex(x,y);
         if(current_vertex >40)
-            return;
+            return 2;
         if(current_destination == -1) {
             current_vertex = temp_current_vertex;
-            return;
+            return 1;
         }
 
         if(current_vertex == temp_current_vertex) {
-            return;
+            return 2;
         }
         current_vertex = temp_current_vertex;
         if(current_path[current_index+1] == current_vertex) {
@@ -290,16 +290,17 @@ public class MainNavigation implements Serializable{
                 current_index = 0;
                 current_destination = -1;
                 current_path[0] = -1;
+                return 3;
             }
             else {
                 current_index += 1;
                 current_vertex = temp_current_vertex;
-                return;
+                return 4;
             }
         }
         else {
             setCurrentPath(current_vertex, current_destination);
-            return;
+            return 5;
         }
     }
 
