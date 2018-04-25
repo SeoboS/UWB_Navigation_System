@@ -61,7 +61,7 @@ public class NaviActivity extends AppCompatActivity {
         int int2 = Integer.parseInt(e2.getText().toString());
         t1.setText("Shortest distance between vertices " + Integer.toString(int1) + " and " + Integer.toString(int2) + " is: " + Integer.toString(N1.shortestPathValue(int1,int2)));
         N1.setCurrentPath(int1,int2);
-        t2.setText(N1.pathToString());
+        t2.setText(N1.stepToString());
     }
 
     public void Button2(View v) {
@@ -82,7 +82,7 @@ public class NaviActivity extends AppCompatActivity {
         if(res == 5)
             res2 = "Wrong way! New path to destination displayed!";
         t1.setText(res2);
-        t2.setText(N1.pathToString());
+        t2.setText(N1.stepToString());
     }
 
 
