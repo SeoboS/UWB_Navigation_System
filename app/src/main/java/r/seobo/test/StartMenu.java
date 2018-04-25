@@ -107,7 +107,7 @@ public class StartMenu extends AppCompatActivity {
     }
 
     public void startNavigation(View v){
-        Intent i = new Intent(this, MainNavigation.class);
+        Intent i = new Intent(this, NaviActivity.class);
         startActivity(i);
     }
 

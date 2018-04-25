@@ -1,5 +1,6 @@
 package r.seobo.test;
 
+import android.app.Activity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -8,67 +9,21 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-public class MainNavigation extends AppCompatActivity {
-    int pSize;
-    int [] current_path;
-    int current_index = 0;
-    int current_x = 0;
-    int current_y = 0;
-    int current_vertex = -1;
-    int current_destination = -1;
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main_navigation);
+import java.io.Serializable;
 
-        pSize = getResources().getInteger(R.integer.pathSize);
-        current_path = new int[pSize];
-        initSpinners();
-    }
+import static r.seobo.test.Constants.ECE_GRAPH;
 
-    public void initSpinners(){
-        Spinner spinner1 = (Spinner) findViewById(R.id.spinner1);
-        Spinner spinner2 = (Spinner) findViewById(R.id.spinner2);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.Room_Array_1, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner1.setAdapter(adapter);
-        spinner2.setAdapter(adapter);
-    }
+public class MainNavigation implements Serializable{
 
-    int[][] graph = new int[][]{
-            {-1, 12, -1, 9, -1, -1, -1, -1, -1},
-            {12, -1, 6, -1, 8, -1, -1, -1, -1},
-            {-1, 6, -1, -1, -1, 15, -1, -1, -1},
-            {9, -1, -1, -1, 10, -1, 13, -1, -1},
-            {-1, 8, -1, 10, -1, 7, -1, 2, -1},
-            {-1, -1, 15, -1, 7, -1, -1, -1, 11},
-            {-1, -1, -1, 13, -1, -1, -1, 10, -1},
-            {-1, -1, -1, -1, 2, -1, 10, -1, 14},
-            {-1, -1, -1, -1, -1, 11, -1, 14, -1}
-    };
-
-
-    public void Button1(View v) {
-        TextView t1 = (TextView) findViewById(R.id.textView1);
-        TextView t2 = (TextView) findViewById(R.id.textView2);
-        EditText e1 = (EditText)findViewById(R.id.editText1);
-        EditText e2 = (EditText)findViewById(R.id.editText2);
-        int int1 = Integer.parseInt(e1.getText().toString());
-        int int2 = Integer.parseInt(e2.getText().toString());
-        t1.setText("Shortest distance between vertices " + Integer.toString(int1) + " and " + Integer.toString(int2) + " is: " + Integer.toString(shortestPathValue(int1,int2)));
-        setCurrentPath(int1,int2);
-        t2.setText(pathToString());
-    }
-
-    public void Button2(View v) {
-        TextView t2 = (TextView)findViewById(R.id.textView2);
-        EditText e1 = (EditText)findViewById(R.id.editText1);
-        EditText e2 = (EditText)findViewById(R.id.editText2);
-        int int1 = Integer.parseInt(e1.getText().toString());
-        int int2 = Integer.parseInt(e2.getText().toString());
-        navigate(int1,int2);
-        t2.setText(pathToString());
-    }
+    private
+        int pSize = 41;
+        int [] current_path = new int[41];
+        int current_index = 0;
+        int current_x = 0;
+        int current_y = 0;
+        int current_vertex = -1;
+        int current_destination = -1;
+        final int[][] graph = ECE_GRAPH;
 
 
     public int shortestPathValue(int start, int end) {
@@ -228,24 +183,90 @@ public class MainNavigation extends AppCompatActivity {
 
     public int findVertex(int x, int y)
     {
-        if(x >= 0 && x < 100 && y >= 0 && y < 100)
-            return 6;
-        if(x >= 100 && x < 200 && y >= 0 && y < 100)
-            return 7;
-        if(x >= 200 && x <= 300 && y >= 0 && y < 100)
-            return 8;
-        if(x >= 0 && x < 100 && y >= 100 && y < 200)
-            return 3;
-        if(x >= 100 && x < 200 && y >= 100 && y < 200)
-            return 4;
-        if(x >= 200 && x <= 300 && y >= 100 && y < 200)
-            return 5;
-        if(x >= 0 && x < 100 && y >= 200 && y <= 300)
+        if(x >= 0 && x < 1000 && y >= 0 && y < 800)
             return 0;
-        if(x >= 100 && x < 200 && y >= 200 && y <= 300)
+        if(x >= 0 && x < 1000 && y >= 880 && y < 1500)
             return 1;
-        if(x >= 200 && x <= 300 && y >= 200 && y <= 300)
+        if(x >= 0 && x < 1000 && y >= 15 && y < 1900)
             return 2;
+        if(x >= 0 && x < 1000 && y >= 1900 && y < 2800)
+            return 3;
+        if(x >= 0 && x < 400 && y >= 2800 && y < 3100)
+            return 4;
+        if(x >= 0 && x < 400 && y >= 3100 && y < 3400)
+            return 5;
+        if(x >= 0 && x < 400 && y >= 3400 && y < 3800)
+            return 6;
+        if(x >= 0 && x < 400 && y >= 3800 && y < 4400)
+            return 7;
+        if(x >= 600 && x < 1000 && y >= 3000 && y < 3600)
+            return 8;
+        if(x >= 1500 && x < 2100 && y >= 1100 && y < 1400)
+            return 9;
+        if(x >= 1500 && x < 2100 && y >= 1400 && y < 1800)
+            return 10;
+        if(x >= 1500 && x < 2100 && y >= 1800 && y < 2200)
+            return 11;
+        if(x >= 1500 && x < 2100 && y >= 2200 && y < 2600)
+            return 12;
+        if(x >= 1500 && x < 2100 && y >= 2600 && y < 3100)
+            return 13;
+        if(x >= 1500 && x < 2100 && y >= 3100 && y < 3600)
+            return 14;
+        if(x >= 2400 && x < 3000 && y >= 200 && y < 500)
+            return 15;
+        if(x >= 2400 && x < 3000 && y >= 500 && y < 800)
+            return 16;
+        if(x >= 2400 && x < 3000 && y >= 800 && y < 1100)
+            return 17;
+        if(x >= 2400 && x < 3000 && y >= 1100 && y < 1400)
+            return 18;
+        if(x >= 2400 && x < 3000 && y >= 1400 && y < 1800)
+            return 19;
+        if(x >= 2400 && x < 3000 && y >= 1800 && y < 2200)
+            return 20;
+        if(x >= 2400 && x < 3000 && y >= 2200 && y < 2500)
+            return 21;
+        if(x >= 2400 && x < 3000 && y >= 2500 && y < 2800)
+            return 22;
+        if(x >= 2400 && x < 3000 && y >= 2800 && y < 3200)
+            return 23;
+        if(x >= 2400 && x < 3000 && y >= 3200 && y < 3600)
+            return 24;
+        if(x >= 1500 && x < 2100 && y >= 4000 && y < 4400)
+            return 25;
+        if(x >= 2400 && x < 3000 && y >= 4000 && y < 4400)
+            return 26;
+        if(x >= 1500 && x < 2100 && y >= 800 && y < 1100)
+            return 27;
+        if(x >= 1600 && x < 2100 && y >= 500 && y < 800)
+            return 28;
+        if(x >= 1000 && x < 1400 && y >= 4000 && y < 4400)
+            return 29;
+        if(x >= 1200 && x < 1500 && y >= 0 && y < 400)
+            return 30;
+        if(x >= 2400 && x < 3000 && y >= 0 && y < 200)
+            return 31;
+        if(x >= 0 && x < 1000 && y >= 4400 && y < 4800)
+            return 32;
+        if(x >= 1000 && x < 1500 && y >= 400 && y < 700)
+            return 33;
+        if(x >= 1000 && x < 1500 && y >= 3600 && y < 4000)
+            return 34;
+        if(x >= 2100 && x < 3000 && y >= 3600 && y < 4000)
+            return 35;
+        if(x >= 2000 && x < 2400 && y >= 200 && y < 500)
+            return 36;
+        if(x >= 600 && x < 1000 && y >= 2800 && y < 3000)
+            return 37;
+        if(x >= 600 && x < 1000 && y >= 3600 && y < 3800)
+            return 38;
+        if(x >= 1500 && x < 2000 && y >= 3600 && y < 4000)
+            return 39;
+        if(x >= 1600 && x < 2000 && y >= 200 && y < 500)
+            return 40;
+        if(x >= 0 && x < 3000 && y >= 0 && y < 4400)
+            return 41;
         return -1;
     }
 
@@ -253,30 +274,24 @@ public class MainNavigation extends AppCompatActivity {
         current_x = x;
         current_y = y;
         int temp_current_vertex = findVertex(x,y);
-
+        if(current_vertex >40)
+            return;
         if(current_destination == -1) {
-            TextView t1 = (TextView) findViewById(R.id.textView1); // DEMONSTRATION
-            t1.setText("No destination set!");
             current_vertex = temp_current_vertex;
             return;
         }
 
         if(current_vertex == temp_current_vertex) {
-            TextView t1 = (TextView) findViewById(R.id.textView1); // DEMONSTRATION
-            t1.setText("Same vertex as before!");
             return;
         }
         current_vertex = temp_current_vertex;
         if(current_path[current_index+1] == current_vertex) {
-            TextView t1 = (TextView) findViewById(R.id.textView1); // DEMONSTRATION
             if(current_vertex == current_destination) {
-                t1.setText("Arrival!");
                 current_index = 0;
-                current_destination = -1; // May want to clear index/dest/path
+                current_destination = -1;
                 current_path[0] = -1;
             }
             else {
-                t1.setText("Progress!");
                 current_index += 1;
                 current_vertex = temp_current_vertex;
                 return;
@@ -284,8 +299,6 @@ public class MainNavigation extends AppCompatActivity {
         }
         else {
             setCurrentPath(current_vertex, current_destination);
-            TextView t1 = (TextView) findViewById(R.id.textView1); // DEMONSTRATION
-            t1.setText("Deviated from path!");
             return;
         }
     }

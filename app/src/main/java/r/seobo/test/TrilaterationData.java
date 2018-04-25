@@ -26,13 +26,8 @@ import com.lemmingapex.trilateration.TrilaterationFunction;
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.util.Random;
 import java.util.Scanner;
 
 import static r.seobo.test.Constants.STATE_CONNECTED;
@@ -47,8 +42,8 @@ public class TrilaterationData extends AppCompatActivity {
     private static final String addrAnch1 = "4369", addrAnch2 = "8738", addrAnch3 = "13107";
     private static final double[][] FIXED_ANCHOR_POSITIONS = {
             {0.0, 0.0},
-            {2.0,0.0},
-            {2.0,2.0} };
+            {200,0.0},
+            {200,200} };
     /*
                x
                |
@@ -63,7 +58,6 @@ public class TrilaterationData extends AppCompatActivity {
     private BluetoothDevice remote;
     private String remoteBTAddress;
     private ProgressDialog progress;
-    boolean isBtConnected = false;
     private UserLocation userLocation = new UserLocation();
     private String mConnectedDeviceName;
     private BluetoothCoordinateService bts;
@@ -73,6 +67,9 @@ public class TrilaterationData extends AppCompatActivity {
      * Array adapter for the conversation thread
      */
     private ArrayAdapter<String> mConversationArrayAdapter;
+    private Double distAnch1 = -2.0, distAnch2 = -2.0, distAnch3 = -2.0;
+
+    boolean isBtConnected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,14 +80,13 @@ public class TrilaterationData extends AppCompatActivity {
         btDataView = (TextView)findViewById(R.id.btDataView);
         userCoord = (TextView)findViewById(R.id.userCoord);
         btDataView.setMovementMethod(new ScrollingMovementMethod());
-
         Intent i = this.getIntent();
         deviceName = i.getStringExtra("deviceName");
         address = i.getStringExtra("address");
         myBluetooth = BluetoothAdapter.getDefaultAdapter();
         bts = new BluetoothCoordinateService(this,mHandler);
         bts.connect(myBluetooth.getRemoteDevice(address),true);
-
+        userLocation = new UserLocation();
         userLocation.setListener(new UserLocation.ChangeListener() { // everytime coordinates are updated, change value
             @Override
             public void onChange() {
@@ -198,7 +194,6 @@ public class TrilaterationData extends AppCompatActivity {
                 //btDataView.setText(s.delimiter().toString());
                 if (s.hasNextLine()) {
                     String tmp, type, value;
-                    Double distAnch1 = -2.0, distAnch2 = -2.0, distAnch3 = -2.0;
                     tmp = s.nextLine();
                     if (tmp.length() > 1) {
                         tmp = tmp.substring(1, tmp.length() - 1); //strip the brackets
@@ -292,7 +287,13 @@ public class TrilaterationData extends AppCompatActivity {
         LeastSquaresOptimizer.Optimum nonLinearOptimum;
         nonLinearOptimum = nlSolver.solve();
         double[] centroid = nonLinearOptimum.getPoint().toArray();
-        userLocation.setLocation(centroid);
+        int[] centroidInt = new int[centroid.length];
+
+        for (int i = 0; i < centroid.length; ++i){ // convert double to int
+            centroidInt[i] = (int) centroid[i];
+        }
+
+        userLocation.setLocation(centroidInt);
     }
 
 }
