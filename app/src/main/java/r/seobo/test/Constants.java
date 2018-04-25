@@ -3,6 +3,21 @@ package r.seobo.test;
 
 public interface Constants {
 
+    public static final String ADDR_ANCH_1 = "4369", ADDR_ANCH_2 = "8738", ADDR_ANCH_3 = "13107";
+
+    public static final double[][] FIXED_ANCHOR_POSITIONS = {
+            {0.0, 0.0},
+            {200,0.0},
+            {200,200} };
+    /*
+               x
+               |
+              1 m
+               |
+    x----1m----x
+     */
+
+
     // Message types sent from the BluetoothChatService Handler
     public static final int MESSAGE_STATE_CHANGE = 1;
     public static final int MESSAGE_READ = 2;

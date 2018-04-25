@@ -32,6 +32,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Scanner;
 import java.util.UUID;
 
 
@@ -64,6 +65,9 @@ public class BluetoothCoordinateService extends Service {
     private ConnectedThread mConnectedThread;
     private int mState;
     private int mNewState;
+
+    private Double distAnch1 = -2.0, distAnch2 = -2.0, distAnch3 = -2.0;
+
 
     /**
      * Constructor. Prepares a new BluetoothChat session.
@@ -270,7 +274,7 @@ public class BluetoothCoordinateService extends Service {
         updateUserInterfaceTitle();
 
         // Start the service over to restart listening mode
-       BluetoothCoordinateService.this.start();
+       //BluetoothCoordinateService.this.start();
     }
 
     /**
@@ -303,22 +307,22 @@ public class BluetoothCoordinateService extends Service {
         private String mSocketType;
 
         public AcceptThread(boolean secure) {
-            BluetoothServerSocket tmp = null;
+            BluetoothServerSocket line = null;
             mSocketType = secure ? "Secure" : "Insecure";
 
             // Create a new listening server socket
             try {
                 if (secure) {
-                    tmp = mAdapter.listenUsingRfcommWithServiceRecord(NAME_SECURE,
+                    line = mAdapter.listenUsingRfcommWithServiceRecord(NAME_SECURE,
                             MY_UUID_SECURE);
                 } else {
-                    tmp = mAdapter.listenUsingInsecureRfcommWithServiceRecord(
+                    line = mAdapter.listenUsingInsecureRfcommWithServiceRecord(
                             NAME_INSECURE, MY_UUID_INSECURE);
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Socket Type: " + mSocketType + "listen() failed", e);
             }
-            mmServerSocket = tmp;
+            mmServerSocket = line;
             mState = STATE_LISTEN;
         }
 
@@ -390,23 +394,23 @@ public class BluetoothCoordinateService extends Service {
 
         public ConnectThread(BluetoothDevice device, boolean secure) {
             mmDevice = device;
-            BluetoothSocket tmp = null;
+            BluetoothSocket line = null;
             mSocketType = secure ? "Secure" : "Insecure";
 
             // Get a BluetoothSocket for a connection with the
             // given BluetoothDevice
             try {
                 if (secure) {
-                    tmp = device.createRfcommSocketToServiceRecord(
+                    line = device.createRfcommSocketToServiceRecord(
                             MY_UUID_SECURE);
                 } else {
-                    tmp = device.createInsecureRfcommSocketToServiceRecord(
+                    line = device.createInsecureRfcommSocketToServiceRecord(
                             MY_UUID_INSECURE);
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Socket Type: " + mSocketType + "create() failed", e);
             }
-            mmSocket = tmp;
+            mmSocket = line;
             mState = STATE_CONNECTING;
         }
 
@@ -464,19 +468,19 @@ public class BluetoothCoordinateService extends Service {
         public ConnectedThread(BluetoothSocket socket, String socketType) {
             Log.d(TAG, "create ConnectedThread: " + socketType);
             mmSocket = socket;
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
+            InputStream lineIn = null;
+            OutputStream lineOut = null;
 
             // Get the BluetoothSocket input and output streams
             try {
-                tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
+                lineIn = socket.getInputStream();
+                lineOut = socket.getOutputStream();
             } catch (IOException e) {
                 Log.e(TAG, "temp sockets not created", e);
             }
 
-            mmInStream = tmpIn;
-            mmOutStream = tmpOut;
+            mmInStream = lineIn;
+            mmOutStream = lineOut;
             mState = STATE_CONNECTED;
         }
 
@@ -484,22 +488,68 @@ public class BluetoothCoordinateService extends Service {
             Log.i(TAG, "BEGIN mConnectedThread");
             byte[] buffer = new byte[1024];
             int bytes;
+            String temp;
 
             // Keep listening to the InputStream while connected
             while (mState == STATE_CONNECTED) {
+                temp = "";
+                // Read from the InputStream
                 try {
-                    // Read from the InputStream
-                    bytes = mmInStream.read(buffer);
+                    Scanner s = new Scanner(mmInStream);
+                    s.useDelimiter("^\\[.*\\]$"); // gets the data in between the brackets [packet]
+                    //btDataView.setText(s.delimiter().toString());
+                    if (!s.hasNextLine()) {
+                        try {
+                            s.reset();
 
-                    // Send the obtained bytes to the UI Activity
-                    mHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer)
-                            .sendToTarget();
-                } catch (IOException e) {
+                            //btDataView.setText("DEBUG: "  + s.nextLine()); // useful for debugging the bluetooth connection.
+                            temp = "DEBUG: "  + s.nextLine();
+                            //textStatus.setText("No properly delimited packets found");
+                            temp = "No properly delimited packets found";
+                            buffer = temp.toString().getBytes();
+                            bytes = temp.toString().getBytes().length;
+                            mHandler.obtainMessage(Constants.MESSAGE_TOAST, bytes, -1, buffer)
+                                    .sendToTarget();
+                        } catch (Exception e) {
+                            //textStatus.setText(e.toString());
+                            buffer = e.toString().getBytes();
+                            bytes = e.toString().getBytes().length;
+                            mHandler.obtainMessage(Constants.MESSAGE_TOAST, bytes, -1, buffer)
+                                    .sendToTarget();
+                        }
+                    } else {
+
+                        String line, type, value;
+                        line = s.nextLine();
+                        if (line.length() > 1) {
+                            line = line.substring(1, line.length() - 1); //strip the brackets
+                        }
+                        //btDataView.append(line);
+                        //btDataView.setText(line); // useful for debugging the bluetooth connection.
+
+                        // this formatting is just for the distance data, not for debugging
+                        if (line.contains(ADDR_ANCH_1) || line.contains(ADDR_ANCH_2) || line.contains(ADDR_ANCH_3)) {        // exception case
+                            //verified for proper format, now we gotta send.
+                            buffer = line.getBytes();
+                            bytes = temp.length();
+                            mHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer)
+                                    .sendToTarget();
+                            // Send the obtained bytes to the UI Activity
+                        } else {
+                            //textStatus.setText("Invalid anchor distance packet");
+                            Log.d(this.toString(),"Invalid anchor distance packet");
+                        }
+                    }
+
+                }
+                catch (Exception e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
                     break;
                 }
             }
+
+
         }
 
         /**

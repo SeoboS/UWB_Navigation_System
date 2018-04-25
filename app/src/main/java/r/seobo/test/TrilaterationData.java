@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,43 +31,28 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Scanner;
 
-import static r.seobo.test.Constants.STATE_CONNECTED;
-import static r.seobo.test.Constants.STATE_CONNECTING;
-import static r.seobo.test.Constants.STATE_LISTEN;
-import static r.seobo.test.Constants.STATE_NONE;
+import static r.seobo.test.Constants.*;
 
 public class TrilaterationData extends AppCompatActivity {
 
     private static final String TAG = "MY_APP_DEBUG_TAG";
     private static final String NAME = "UWB_Device";
-    private static final String addrAnch1 = "4369", addrAnch2 = "8738", addrAnch3 = "13107";
-    private static final double[][] FIXED_ANCHOR_POSITIONS = {
-            {0.0, 0.0},
-            {200,0.0},
-            {200,200} };
-    /*
-               x
-               |
-              1 m
-               |
-    x----1m----x
-     */
 
-    TextView textStatus, btDataView, userCoord;
+    TextView textStatus, userCoord;
+    private ListView mCoordinateView;
+    private ArrayAdapter<String> mArrayAdapter;
+
 
     private BluetoothAdapter myBluetooth;
     private BluetoothDevice remote;
     private String remoteBTAddress;
     private ProgressDialog progress;
-    private UserLocation userLocation = new UserLocation();
+    private UserLocation userLocation;
     private String mConnectedDeviceName;
     private BluetoothCoordinateService bts;
     private String address;
     private String deviceName;
-    /**
-     * Array adapter for the conversation thread
-     */
-    private ArrayAdapter<String> mConversationArrayAdapter;
+
     private Double distAnch1 = -2.0, distAnch2 = -2.0, distAnch3 = -2.0;
 
     boolean isBtConnected = false;
@@ -77,20 +63,28 @@ public class TrilaterationData extends AppCompatActivity {
         setContentView(R.layout.activity_trilateration_data);
 
         textStatus = (TextView)findViewById(R.id.status);
-        btDataView = (TextView)findViewById(R.id.btDataView);
         userCoord = (TextView)findViewById(R.id.userCoord);
-        btDataView.setMovementMethod(new ScrollingMovementMethod());
+        mCoordinateView = (ListView) findViewById(R.id.in);
+
+        userLocation = new UserLocation();
         Intent i = this.getIntent();
         deviceName = i.getStringExtra("deviceName");
         address = i.getStringExtra("address");
+
+        // Initialize the array adapter for the conversation thread
+        mArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
+
+        mCoordinateView.setAdapter(mArrayAdapter);
+
         myBluetooth = BluetoothAdapter.getDefaultAdapter();
         bts = new BluetoothCoordinateService(this,mHandler);
         bts.connect(myBluetooth.getRemoteDevice(address),true);
-        userLocation = new UserLocation();
+
+
         userLocation.setListener(new UserLocation.ChangeListener() { // everytime coordinates are updated, change value
             @Override
             public void onChange() {
-                String temp = String.format("x: %4.2f, y: %4.2f\n", userLocation.getLocation()[0], userLocation.getLocation()[1]);
+                String temp = String.format("x: %d, y: %d\n", userLocation.getLocation()[0], userLocation.getLocation()[1]);
                 userCoord.setText(temp);
             }
         });
@@ -143,7 +137,7 @@ public class TrilaterationData extends AppCompatActivity {
                     switch (msg.arg1) {
                         case STATE_CONNECTED:
                             setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
-                            mConversationArrayAdapter.clear();
+                            mArrayAdapter.clear();
                             break;
                         case STATE_CONNECTING:
                             setStatus(R.string.title_connecting);
@@ -158,13 +152,56 @@ public class TrilaterationData extends AppCompatActivity {
                     byte[] writeBuf = (byte[]) msg.obj;
                     // construct a string from the buffer
                     String writeMessage = new String(writeBuf);
-                    mConversationArrayAdapter.add("Me:  " + writeMessage);
+                    mArrayAdapter.add("Me:  " + writeMessage);
                     break;
                 case Constants.MESSAGE_READ:
                     byte[] readBuf = (byte[]) msg.obj;
                     // construct a string from the valid bytes in the buffer
-                    String readMessage = new String(readBuf, 0, msg.arg1);
-                    mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);
+                    String line = new String(readBuf);
+                    try {
+                        line = new String(readBuf, "UTF-8");
+                    }catch(Exception e){
+                        line = new String(readBuf,msg.arg1);
+                    }
+                    String temp = "", type, value;
+                    byte[] buffer = new byte[1024];
+                    int bytes;
+
+                    //verific
+                    String msgToSend;
+                    for (String str : line.split(", ")) {      // get all split data
+                        temp = temp.concat(str + " ");
+                        int ind = str.indexOf(": ");
+                        if (ind != -1) {
+                            type = str.substring(0, ind);
+                            value = str.substring(str.indexOf(":") + 1);
+                            if (type != null && value != null) {
+                                switch (type) {
+                                    case ADDR_ANCH_1:
+                                        distAnch1 = Double.valueOf(value);
+                                        break;
+                                    case ADDR_ANCH_2:
+                                        distAnch2 = Double.valueOf(value);
+                                        break;
+                                    case ADDR_ANCH_3:
+                                        distAnch3 = Double.valueOf(value);
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                        }
+                        else{
+                            textStatus.setText("Couldn't get anchor dist data ");
+                        }
+                        temp.concat("\n");
+                    }
+
+                    if (distAnch1 > -1 && distAnch2 > -1 && distAnch3 > -1) {
+                        saveDistData(distAnch1, distAnch2, distAnch3);
+                    }
+
+                    mArrayAdapter.add(temp);
                     break;
                 case Constants.MESSAGE_DEVICE_NAME:
                     // save the connected device's name
@@ -184,83 +221,83 @@ public class TrilaterationData extends AppCompatActivity {
         }
     };
 
-    public void readBTData(View v){
-        BluetoothSocket btSocket = BluetoothConnectionService.getSocket();
-        if(btSocket.isConnected()) {
-            try {
-                InputStream i = btSocket.getInputStream();
-                Scanner s = new Scanner(i);
-                s.useDelimiter("^\\[.*\\]$"); // gets the data in between the brackets [packet]
-                //btDataView.setText(s.delimiter().toString());
-                if (s.hasNextLine()) {
-                    String tmp, type, value;
-                    tmp = s.nextLine();
-                    if (tmp.length() > 1) {
-                        tmp = tmp.substring(1, tmp.length() - 1); //strip the brackets
-                    }
-                    //btDataView.append(tmp);
-                    //btDataView.setText(tmp); // useful for debugging the bluetooth connection.
-
-                    // this formatting is just for the distance data, not for debugging
-                    if (tmp.contains(addrAnch1) || tmp.contains(addrAnch2) || tmp.contains(addrAnch3)) {        // exception case
-                        for (String str : tmp.split(", ")) {      // get all split data
-                            btDataView.append(str + " ");
-                            int ind = str.indexOf(": ");
-                            if (ind != -1) {
-                                textStatus.setText("data updated");
-                                type = str.substring(0, ind);
-                                value = str.substring(str.indexOf(":") + 1);
-                                if (type != null && value != null) {
-                                    switch (type) {
-                                        case addrAnch1:
-                                            distAnch1 = Double.valueOf(value);
-                                            break;
-                                        case addrAnch2:
-                                            distAnch2 = Double.valueOf(value);
-                                            break;
-                                        case addrAnch3:
-                                            distAnch3 = Double.valueOf(value);
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                }
-                            }
-                            else{
-                                textStatus.setText("Couldn't get anchor dist data ");
-                            }
-                            btDataView.append("\n");
-                        }
-
-                        if (distAnch1 > -1 && distAnch2 > -1 && distAnch3 > -1) {
-                            saveDistData(distAnch1, distAnch2, distAnch3);
-                        }
-
-                    } else {
-                        textStatus.setText("Invalid anchor distance packet");
-                    }
-                } else {
-                    try {
-                        s.reset();
-                        btDataView.setText("DEBUG: "  + s.nextLine()); // useful for debugging the bluetooth connection.
-                        //byte[] buff = new byte[100];
-                        //i.read(buff, 0,buff.length);
-                        //btDataView.setText(new String(buff));
-                        textStatus.setText("No properly delimited packets found");
-                    } catch (Exception e) {
-                        textStatus.setText(e.toString());
-                    }
-                }
-            } catch (IOException e) {
-                textStatus.setText(e.toString());
-            }
-        }
-        else{
-            Intent i = new Intent(this,StartMenu.class);
-            i.putExtra("error","Socket not connected");
-            startActivity(i);
-        }
-    }
+//    public void readBTData(View v){
+//        BluetoothSocket btSocket = BluetoothConnectionService.getSocket();
+//        if(btSocket.isConnected()) {
+//            try {
+//                InputStream i = btSocket.getInputStream();
+//                Scanner s = new Scanner(i);
+//                s.useDelimiter("^\\[.*\\]$"); // gets the data in between the brackets [packet]
+//                //btDataView.setText(s.delimiter().toString());
+//                if (s.hasNextLine()) {
+//                    String tmp, type, value;
+//                    tmp = s.nextLine();
+//                    if (tmp.length() > 1) {
+//                        tmp = tmp.substring(1, tmp.length() - 1); //strip the brackets
+//                    }
+//                    //btDataView.append(tmp);
+//                    //btDataView.setText(tmp); // useful for debugging the bluetooth connection.
+//
+//                    // this formatting is just for the distance data, not for debugging
+//                    if (tmp.contains(ADDR_ANCH_1) || tmp.contains(ADDR_ANCH_2) || tmp.contains(ADDR_ANCH_3)) {        // exception case
+//                        for (String str : tmp.split(", ")) {      // get all split data
+//                            btDataView.append(str + " ");
+//                            int ind = str.indexOf(": ");
+//                            if (ind != -1) {
+//                                textStatus.setText("data updated");
+//                                type = str.substring(0, ind);
+//                                value = str.substring(str.indexOf(":") + 1);
+//                                if (type != null && value != null) {
+//                                    switch (type) {
+//                                        case ADDR_ANCH_1:
+//                                            distAnch1 = Double.valueOf(value);
+//                                            break;
+//                                        case ADDR_ANCH_2:
+//                                            distAnch2 = Double.valueOf(value);
+//                                            break;
+//                                        case ADDR_ANCH_3:
+//                                            distAnch3 = Double.valueOf(value);
+//                                            break;
+//                                        default:
+//                                            break;
+//                                    }
+//                                }
+//                            }
+//                            else{
+//                                textStatus.setText("Couldn't get anchor dist data ");
+//                            }
+//                            btDataView.append("\n");
+//                        }
+//
+//                        if (distAnch1 > -1 && distAnch2 > -1 && distAnch3 > -1) {
+//                            saveDistData(distAnch1, distAnch2, distAnch3);
+//                        }
+//
+//                    } else {
+//                        textStatus.setText("Invalid anchor distance packet");
+//                    }
+//                } else {
+//                    try {
+//                        s.reset();
+//                        //btDataView.setText("DEBUG: "  + s.nextLine()); // useful for debugging the bluetooth connection.
+//                        //byte[] buff = new byte[100];
+//                        //i.read(buff, 0,buff.length);
+//                        //btDataView.setText(new String(buff));
+//                        textStatus.setText("No properly delimited packets found");
+//                    } catch (Exception e) {
+//                        textStatus.setText(e.toString());
+//                    }
+//                }
+//            } catch (IOException e) {
+//                textStatus.setText(e.toString());
+//            }
+//        }
+//        else{
+//            Intent i = new Intent(this,StartMenu.class);
+//            i.putExtra("error","Socket not connected");
+//            startActivity(i);
+//        }
+//    }
 
     /**
      * Handle storage of distance data
@@ -272,7 +309,7 @@ public class TrilaterationData extends AppCompatActivity {
         //gotta figure out how to store this data
         // this is preliminary, just the original
         double[] d = {d1,d2,d3};
-        btDataView.setText("d1: "+String.valueOf(d1) +", d2: "+ String.valueOf(d2) + ", d3: " + String.valueOf(d3) + "\n");
+        //userCoord.setText("d1: "+String.valueOf(d1) +", d2: "+ String.valueOf(d2) + ", d3: " + String.valueOf(d3) + "\n");
         trilaterate(FIXED_ANCHOR_POSITIONS,d);
     }
 

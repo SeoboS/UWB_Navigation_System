@@ -21,11 +21,11 @@ public class NaviActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main_navigation);
         final TextView userCoord = (TextView)findViewById(R.id.userCoord);
         initSpinners();
-        N1 = new MainNavigation();
 
         userLocation.setListener(new UserLocation.ChangeListener() { // everytime coordinates are updated, change value
             @Override
             public void onChange() {
+                N1 = new MainNavigation();
                 String temp = String.format("x: %4.2f, y: %4.2f\n", userLocation.getLocation()[0], userLocation.getLocation()[1]);
                 userCoord.setText(temp);
 
