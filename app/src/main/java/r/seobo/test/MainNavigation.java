@@ -367,6 +367,106 @@ public class MainNavigation implements Serializable{
         return path;
     }
 
+    public String hallStepToString(){
+        String path = "No current path!";
+        if(current_path[current_index] == -1) {
+            return path;
+        }
+        if(current_path[current_index+1] == -1) {
+            return path;
+        }
+        int int2 = current_path[current_index+1];       //next vertex
+
+        path = "";
+        switch(int2) {
+            case 0: path += "Continue to Room 103.";
+                break;
+            case 1: path += "Continue to Room 105.";
+                break;
+            case 2: path += "Continue to Room 107.";
+                break;
+            case 3: path += "Continue to Room 109.";
+                break;
+            case 4: path += "Continue to Room 111.";
+                break;
+            case 5: path += "Continue to Room 113.";
+                break;
+            case 6: path += "Continue to Room 115.";
+                break;
+            case 7: path += "Continue to Room 117.";
+                break;
+            case 8: path += "Continue to Room 119.";
+                break;
+            case 9: path += "Continue to Room 102.";
+                break;
+            case 10: path += "Continue to Room 104.";
+                break;
+            case 11: path += "Continue to Room 106.";
+                break;
+            case 12: path += "Continue to Room 108.";
+                break;
+            case 13: path += "Continue to Room 110.";
+                break;
+            case 14: path += "Continue to Room 112.";
+                break;
+            case 15: path += "Continue to Room 114.";
+                break;
+            case 16: path += "Continue to Room 116.";
+                break;
+            case 17: path += "Continue to Room 118.";
+                break;
+            case 18: path += "Continue to Room 120.";
+                break;
+            case 19: path += "Continue to Room 122.";
+                break;
+            case 20: path += "Continue to Room 124.";
+                break;
+            case 21: path += "Continue to Room 126.";
+                break;
+            case 22: path += "Continue to Room 128.";
+                break;
+            case 23: path += "Continue to Room 130.";
+                break;
+            case 24: path += "Continue to Room 132.";
+                break;
+            case 25: path += "Continue to Room 134a.";
+                break;
+            case 26: path += "Continue to Room 134b.";
+                break;
+            case 27: path += "Continue to men's restroom.";
+                break;
+            case 28: path += "Continue to women's restroom.";
+                break;
+            case 29: path += "Exit building through exit 1.";
+                break;
+            case 30: path += "Exit building through exit 2.";
+                break;
+            case 31: path += "Enter stairwell 1.";
+                break;
+            case 32: path += "Enter stairwell 2.";
+                break;
+            case 33: path += "Continue to corner of hallway";
+                break;
+            case 34: path += "Continue to corner of hallway";
+                break;
+            case 35: path += "Continue to corner of hallway";
+                break;
+            case 36: path += "Continue to corner of hallway";
+                break;
+            case 37: path += "Continue towards hallway door.";
+                break;
+            case 38: path += "Continue towards hallway door.";
+                break;
+            case 39: path += "Continue towards hallway door.";
+                break;
+            case 40: path += "Continue towards hallway door.";
+                break;
+            default: path += "";
+        };
+
+        return path;
+    }
+
 
     public int findVertex(int x, int y)
     {
@@ -461,8 +561,8 @@ public class MainNavigation implements Serializable{
         current_x = x;
         current_y = y;
         int temp_current_vertex = findVertex(x,y);
-        if(current_vertex >40)
-            return 2;
+        if(temp_current_vertex >40)
+            return 6;
         if(current_destination == -1) {
             current_vertex = temp_current_vertex;
             return 1;

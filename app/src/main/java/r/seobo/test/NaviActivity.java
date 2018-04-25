@@ -237,9 +237,14 @@ public class NaviActivity extends AppCompatActivity {
         else{
             int int1 = Integer.parseInt(e1.getText().toString());
             int int2 = Integer.parseInt(e2.getText().toString());
-            t1.setText("Shortest distance between vertices " + Integer.toString(int1) + " and " + Integer.toString(int2) + " is: " + Integer.toString(N1.shortestPathValue(int1, int2)));
+            if(int1 >40 || int1<0 || int2>40 || int2<0) {
+                t1.setText("Invalid selection");
+                return;
+            }
+            //t1.setText("Shortest distance between vertices " + Integer.toString(int1) + " and " + Integer.toString(int2) + " is: " + Integer.toString(N1.shortestPathValue(int1, int2)));
+            t1.setText("Destination set!");
             N1.setCurrentPath(int1, int2);
-            t2.setText(N1.stepToString());
+            t2.setText(N1.pathToString() + "\n" + N1.stepToString());
             destSet = true;
         }
     }
@@ -269,33 +274,21 @@ public class NaviActivity extends AppCompatActivity {
             res2 = "You have made progress towards your destination!";
         if(res == 5)
             res2 = "Wrong way! New path to destination displayed!";
+        if(res == 6)
+            res2 = "Presently in hallway!";
         t1.setText(res2);
-        //t2.setText(N1.stepToString());
+
 
         // using the following for testing purposes since steptostring isnt done yet
-        N1.setCurrentPath(int1, int2);
-        t2.setText(N1.pathToString());
+        //N1.setCurrentPath(int1, int2);
+
+        if(res == 6)
+            t2.setText(N1.pathToString() + "\n" + N1.hallStepToString());// Special form of stepToString without exitting current room, b/c you are in hall now
+        else
+            t2.setText(N1.pathToString() + "\n" + N1.stepToString());
     }
 
 
 
 
 }
-
-
-    /*
-
-    MainNavigation N1;
-    Intent i = new Intent(this,TrilaterationData.class);
-    i.putExtra("Navi1", N1);
-
-        Intents
-    */
-
-
-    /*
-    MainNavigation N1;
-    Intent i = new Intent(this,NaviActivity.class);
-
-
-    */
