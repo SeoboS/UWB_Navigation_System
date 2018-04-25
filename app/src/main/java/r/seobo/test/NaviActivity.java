@@ -12,14 +12,35 @@ import android.content.Intent;
 
 public class NaviActivity extends AppCompatActivity {
 
+    private MainNavigation N1;
+    private UserLocation userLocation;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_navigation);
+        final TextView userCoord = (TextView)findViewById(R.id.userCoord);
         initSpinners();
+        N1 = new MainNavigation();
+
+        userLocation.setListener(new UserLocation.ChangeListener() { // everytime coordinates are updated, change value
+            @Override
+            public void onChange() {
+                String temp = String.format("x: %4.2f, y: %4.2f\n", userLocation.getLocation()[0], userLocation.getLocation()[1]);
+                userCoord.setText(temp);
+
+                TextView t1 = (TextView) findViewById(R.id.textView1);
+                TextView t2 = (TextView) findViewById(R.id.textView2);
+                int int1 = userLocation.getLocation()[0];
+                int int2 = userLocation.getLocation()[1];
+                t1.setText("Shortest distance between vertices " + Integer.toString(int1) + " and " + Integer.toString(int2) + " is: " + Integer.toString(N1.shortestPathValue(int1,int2)));
+                N1.setCurrentPath(int1,int2);
+                t2.setText(N1.pathToString());
+            }
+        });
+
     }
 
-    MainNavigation N1;
 
     public void initSpinners(){
         Spinner spinner1 = (Spinner) findViewById(R.id.spinner1);
@@ -52,6 +73,8 @@ public class NaviActivity extends AppCompatActivity {
         N1.navigate(int1,int2);
         t2.setText(N1.pathToString());
     }
+
+
 
 
 }
