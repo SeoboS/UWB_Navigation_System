@@ -6,30 +6,30 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
-import android.os.ParcelUuid;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.method.ScrollingMovementMethod;
-import android.view.View;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
+import com.jjoe64.graphview.series.PointsGraphSeries;
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
 import com.lemmingapex.trilateration.TrilaterationFunction;
 
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Scanner;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 import static r.seobo.test.Constants.*;
 
@@ -44,9 +44,6 @@ public class TrilaterationData extends AppCompatActivity {
 
 
     private BluetoothAdapter myBluetooth;
-    private BluetoothDevice remote;
-    private String remoteBTAddress;
-    private ProgressDialog progress;
     private UserLocation userLocation;
     private String mConnectedDeviceName;
     private BluetoothCoordinateService bts;
@@ -55,16 +52,37 @@ public class TrilaterationData extends AppCompatActivity {
 
     private Double distAnch1 = -2.0, distAnch2 = -2.0, distAnch3 = -2.0;
 
-    boolean isBtConnected = false;
+    private String currentView;
+    PointsGraphSeries<DataPoint> series2;
+    private ArrayList<XYValue> xyValueArray;
+    private static final int MAX_COORDS_ON_GRAPH = 10;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //currentView =
         setContentView(R.layout.activity_trilateration_data);
 
         textStatus = (TextView)findViewById(R.id.status);
         userCoord = (TextView)findViewById(R.id.userCoord);
         mCoordinateView = (ListView) findViewById(R.id.in);
+//
+//        final GraphView graph = (GraphView) findViewById(R.id.graph);
+//        //graph.getViewport().setScalable(true);
+//        //graph.getViewport().setScalableY(true);
+//        graph.getViewport().setScrollable(true);
+//        graph.getViewport().setScrollableY(true);
+//
+//        PointsGraphSeries<DataPoint> series = new PointsGraphSeries<>( new DataPoint[] {
+//                new DataPoint(FIXED_ANCHOR_POSITIONS[0][0], FIXED_ANCHOR_POSITIONS[0][1]),
+//                new DataPoint(FIXED_ANCHOR_POSITIONS[1][0], FIXED_ANCHOR_POSITIONS[1][1]),
+//                new DataPoint(FIXED_ANCHOR_POSITIONS[2][0], FIXED_ANCHOR_POSITIONS[2][1])
+//        }
+//        );
+//        graph.addSeries(series);
+//        xyValueArray = new ArrayList<>(MAX_COORDS_ON_GRAPH);
+//        series2 = new PointsGraphSeries<>();
 
         userLocation = new UserLocation();
         Intent i = this.getIntent();
@@ -86,6 +104,28 @@ public class TrilaterationData extends AppCompatActivity {
             public void onChange() {
                 String temp = String.format("x: %d, y: %d\n", userLocation.getLocation()[0], userLocation.getLocation()[1]);
                 userCoord.setText(temp);
+                /*
+                if (xyValueArray.size() >= MAX_COORDS_ON_GRAPH) {
+                    xyValueArray.remove(0);
+                    xyValueArray.add(new XYValue(userLocation.getLocation()[0], userLocation.getLocation()[1]));
+                }
+                else{
+                    xyValueArray.add(new XYValue(userLocation.getLocation()[0], userLocation.getLocation()[1]));
+                }
+                xyValueArray = sortArray(xyValueArray);
+
+                for(int i = 0;i <xyValueArray.size(); i++){
+                    try{
+                        double x = xyValueArray.get(i).getX();
+                        double y = xyValueArray.get(i).getY();
+                        series2.appendData(new DataPoint(x,y),false, 10);
+                    }catch (IllegalArgumentException e){
+                        Log.e(TAG, "createScatterPlot: IllegalArgumentException: " + e.getMessage() );
+                    }
+                }
+                graph.addSeries(series2);
+                */
+
             }
         });
     }
@@ -169,7 +209,10 @@ public class TrilaterationData extends AppCompatActivity {
 
                     //verific
                     String msgToSend;
-                    for (String str : line.split(", ")) {      // get all split data
+                    for (String str : line.split(",")) {      // get all split data
+                        if (str == " "){
+                            continue;
+                        }
                         temp = temp.concat(str + " ");
                         int ind = str.indexOf(": ");
                         if (ind != -1) {
@@ -298,6 +341,60 @@ public class TrilaterationData extends AppCompatActivity {
 //            startActivity(i);
 //        }
 //    }
+
+    /**
+     * Sorts an ArrayList<XYValue> with respect to the x values.
+     * @param array
+     * @return
+     */
+    private ArrayList<XYValue> sortArray(ArrayList<XYValue> array){
+        /*
+        //Sorts the xyValues in Ascending order to prepare them for the PointsGraphSeries<DataSet>
+         */
+        int factor = Integer.parseInt(String.valueOf(Math.round(Math.pow(array.size(),2))));
+        int m = array.size() - 1;
+        int count = 0;
+        Log.d(TAG, "sortArray: Sorting the XYArray.");
+
+
+        while (true) {
+            m--;
+            if (m <= 0) {
+                m = array.size() - 1;
+            }
+            //Log.d(TAG, "sortArray: m = " + m);
+            try {
+                //print out the y entrys so we know what the order looks like
+                //Log.d(TAG, "sortArray: Order:");
+                //for(int n = 0;n < array.size();n++){
+                //Log.d(TAG, "sortArray: " + array.get(n).getY());
+                //}
+                int tempY = array.get(m - 1).getY();
+                int tempX = array.get(m - 1).getX();
+                if (tempX > array.get(m).getX()) {
+                    array.get(m - 1).setY(array.get(m).getY());
+                    array.get(m).setY(tempY);
+                    array.get(m - 1).setX(array.get(m).getX());
+                    array.get(m).setX(tempX);
+                } else if (tempX == array.get(m).getX()) {
+                    count++;
+                    //Log.d(TAG, "sortArray: count = " + count);
+                } else if (array.get(m).getX() > array.get(m - 1).getX()) {
+                    count++;
+                   // Log.d(TAG, "sortArray: count = " + count);
+                }
+                //break when factorial is done
+                if (count == factor) {
+                    break;
+                }
+            } catch (ArrayIndexOutOfBoundsException e) {
+                Log.e(TAG, "sortArray: ArrayIndexOutOfBoundsException. Need more than 1 data point to create Plot." +
+                        e.getMessage());
+                break;
+            }
+        }
+        return array;
+    }
 
     /**
      * Handle storage of distance data

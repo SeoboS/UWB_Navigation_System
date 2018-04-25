@@ -18,7 +18,6 @@ package r.seobo.test;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.Intent;
@@ -59,8 +58,6 @@ public class BluetoothCoordinateService extends Service {
     // Member fields
     private final BluetoothAdapter mAdapter;
     private final Handler mHandler;
-    private AcceptThread mSecureAcceptThread;
-    private AcceptThread mInsecureAcceptThread;
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
     private int mState;
@@ -120,15 +117,6 @@ public class BluetoothCoordinateService extends Service {
             mConnectedThread = null;
         }
 
-//        // Start the thread to listen on a BluetoothServerSocket
-//        if (mSecureAcceptThread == null) {
-//            mSecureAcceptThread = new AcceptThread(true);
-//            mSecureAcceptThread.start();
-//        }
-//        if (mInsecureAcceptThread == null) {
-//            mInsecureAcceptThread = new AcceptThread(false);
-//            mInsecureAcceptThread.start();
-//        }
         // Update UI title
         updateUserInterfaceTitle();
     }
@@ -186,15 +174,6 @@ public class BluetoothCoordinateService extends Service {
             mConnectedThread = null;
         }
 
-//        // Cancel the accept thread because we only want to connect to one device
-//        if (mSecureAcceptThread != null) {
-//            mSecureAcceptThread.cancel();
-//            mSecureAcceptThread = null;
-//        }
-//        if (mInsecureAcceptThread != null) {
-//            mInsecureAcceptThread.cancel();
-//            mInsecureAcceptThread = null;
-//        }
 
         // Start the thread to manage the connection and perform transmissions
         mConnectedThread = new ConnectedThread(socket, socketType);
@@ -226,15 +205,6 @@ public class BluetoothCoordinateService extends Service {
             mConnectedThread = null;
         }
 
-//        if (mSecureAcceptThread != null) {
-//            mSecureAcceptThread.cancel();
-//            mSecureAcceptThread = null;
-//        }
-//
-//        if (mInsecureAcceptThread != null) {
-//            mInsecureAcceptThread.cancel();
-//            mInsecureAcceptThread = null;
-//        }
         mState = STATE_NONE;
         // Update UI title
         updateUserInterfaceTitle();
@@ -294,91 +264,6 @@ public class BluetoothCoordinateService extends Service {
 
         // Start the service over to restart listening mode
        BluetoothCoordinateService.this.start();
-    }
-
-    /**
-     * This thread runs while listening for incoming connections. It behaves
-     * like a server-side client. It runs until a connection is accepted
-     * (or until cancelled).
-     */
-    private class AcceptThread extends Thread {
-        // The local server socket
-        private final BluetoothServerSocket mmServerSocket;
-        private String mSocketType;
-
-        public AcceptThread(boolean secure) {
-            BluetoothServerSocket line = null;
-            mSocketType = secure ? "Secure" : "Insecure";
-
-            // Create a new listening server socket
-            try {
-                if (secure) {
-                    line = mAdapter.listenUsingRfcommWithServiceRecord(NAME_SECURE,
-                            MY_UUID_SECURE);
-                } else {
-                    line = mAdapter.listenUsingInsecureRfcommWithServiceRecord(
-                            NAME_INSECURE, MY_UUID_INSECURE);
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "Socket Type: " + mSocketType + "listen() failed", e);
-            }
-            mmServerSocket = line;
-            mState = STATE_LISTEN;
-        }
-
-        public void run() {
-            Log.d(TAG, "Socket Type: " + mSocketType +
-                    "BEGIN mAcceptThread" + this);
-            setName("AcceptThread" + mSocketType);
-
-            BluetoothSocket socket = null;
-
-            // Listen to the server socket if we're not connected
-            while (mState != STATE_CONNECTED) {
-                try {
-                    // This is a blocking call and will only return on a
-                    // successful connection or an exception
-                    socket = mmServerSocket.accept();
-                } catch (IOException e) {
-                    Log.e(TAG, "Socket Type: " + mSocketType + "accept() failed", e);
-                    break;
-                }
-
-                // If a connection was accepted
-                if (socket != null) {
-                    synchronized (BluetoothCoordinateService.this) {
-                        switch (mState) {
-                            case STATE_LISTEN:
-                            case STATE_CONNECTING:
-                                // Situation normal. Start the connected thread.
-                                connected(socket, socket.getRemoteDevice(),
-                                        mSocketType);
-                                break;
-                            case STATE_NONE:
-                            case STATE_CONNECTED:
-                                // Either not ready or already connected. Terminate new socket.
-                                try {
-                                    socket.close();
-                                } catch (IOException e) {
-                                    Log.e(TAG, "Could not close unwanted socket", e);
-                                }
-                                break;
-                        }
-                    }
-                }
-            }
-            Log.i(TAG, "END mAcceptThread, socket Type: " + mSocketType);
-
-        }
-
-        public void cancel() {
-            Log.d(TAG, "Socket Type" + mSocketType + "cancel " + this);
-            try {
-                mmServerSocket.close();
-            } catch (IOException e) {
-                Log.e(TAG, "Socket Type" + mSocketType + "close() of server failed", e);
-            }
-        }
     }
 
 
@@ -537,7 +422,7 @@ public class BluetoothCoordinateService extends Service {
                             // Send the obtained bytes to the UI Activity
                         } else {
                             //textStatus.setText("Invalid anchor distance packet");
-                            Log.d(this.toString(),"Invalid anchor distance packet");
+                            Log.d(this.toString(),"Invalid anchor distance packet: " + line);
                         }
                     }
 
