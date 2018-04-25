@@ -43,15 +43,33 @@
     <string name="discoverable">Make discoverable</string>
 
     <string-array name="Room_Array_1">
-        <item>Room 0</item>
-        <item>Room 1</item>
-        <item>Room 2</item>
-        <item>Room 3</item>
-        <item>Room 4</item>
-        <item>Room 5</item>
-        <item>Room 6</item>
-        <item>Room 7</item>
-        <item>Room 8</item>
+        <item>Room 103</item>
+        <item>Room 105</item>
+        <item>Room 107</item>
+        <item>Room 109</item>
+        <item>Room 111</item>
+        <item>Room 113</item>
+        <item>Room 115</item>
+        <item>Room 117</item>
+        <item>Room 119</item>
+        <item>Room 102</item>
+        <item>Room 104</item>
+        <item>Room 106</item>
+        <item>Room 108</item>
+        <item>Room 110</item>
+        <item>Room 112</item>
+        <item>Room 114</item>
+        <item>Room 116</item>
+        <item>Room 118</item>
+        <item>Room 120</item>
+        <item>Room 122</item>
+        <item>Room 124</item>
+        <item>Room 126</item>
+        <item>Room 128</item>
+        <item>Room 130</item>
+        <item>Room 132</item>
+        <item>Room 134a</item>
+        <item>Room 134b</item>
     </string-array>
 
 </resources>

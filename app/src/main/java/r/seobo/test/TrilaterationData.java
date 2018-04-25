@@ -52,10 +52,10 @@ public class TrilaterationData extends AppCompatActivity {
 
     private Double distAnch1 = -2.0, distAnch2 = -2.0, distAnch3 = -2.0;
 
-    private String currentView;
-    PointsGraphSeries<DataPoint> series2;
-    private ArrayList<XYValue> xyValueArray;
-    private static final int MAX_COORDS_ON_GRAPH = 10;
+
+//    PointsGraphSeries<DataPoint> series2;
+//    private ArrayList<XYValue> xyValueArray;
+//    private static final int MAX_COORDS_ON_GRAPH = 10;
 
 
     @Override
@@ -67,6 +67,7 @@ public class TrilaterationData extends AppCompatActivity {
         textStatus = (TextView)findViewById(R.id.status);
         userCoord = (TextView)findViewById(R.id.userCoord);
         mCoordinateView = (ListView) findViewById(R.id.in);
+
 //
 //        final GraphView graph = (GraphView) findViewById(R.id.graph);
 //        //graph.getViewport().setScalable(true);
@@ -188,12 +189,6 @@ public class TrilaterationData extends AppCompatActivity {
                             break;
                     }
                     break;
-                case Constants.MESSAGE_WRITE:
-                    byte[] writeBuf = (byte[]) msg.obj;
-                    // construct a string from the buffer
-                    String writeMessage = new String(writeBuf);
-                    mArrayAdapter.add("Me:  " + writeMessage);
-                    break;
                 case Constants.MESSAGE_READ:
                     byte[] readBuf = (byte[]) msg.obj;
                     // construct a string from the valid bytes in the buffer
@@ -241,7 +236,7 @@ public class TrilaterationData extends AppCompatActivity {
                     }
 
                     if (distAnch1 > -1 && distAnch2 > -1 && distAnch3 > -1) {
-                        saveDistData(distAnch1, distAnch2, distAnch3);
+                        userLocation.setLocation(saveDistDataAndTrilaterate(distAnch1, distAnch2, distAnch3));
                     }
 
                     mArrayAdapter.add(temp);
@@ -313,7 +308,7 @@ public class TrilaterationData extends AppCompatActivity {
 //                        }
 //
 //                        if (distAnch1 > -1 && distAnch2 > -1 && distAnch3 > -1) {
-//                            saveDistData(distAnch1, distAnch2, distAnch3);
+//                            saveDistDataAndTrilaterate(distAnch1, distAnch2, distAnch3);
 //                        }
 //
 //                    } else {
@@ -402,18 +397,18 @@ public class TrilaterationData extends AppCompatActivity {
      * @param d2    distance between tag and second anchor
      * @param d3    distance between tag and third anchor
      */
-    private void saveDistData(double d1, double d2, double d3){
+    public static int[] saveDistDataAndTrilaterate(double d1, double d2, double d3){
         //gotta figure out how to store this data
         // this is preliminary, just the original
         double[] d = {d1,d2,d3};
         //userCoord.setText("d1: "+String.valueOf(d1) +", d2: "+ String.valueOf(d2) + ", d3: " + String.valueOf(d3) + "\n");
-        trilaterate(FIXED_ANCHOR_POSITIONS,d);
+        return trilaterate(FIXED_ANCHOR_POSITIONS,d);
     }
 
     /**
      * Trilaterate based on 2D positions and distances.
      */
-    private void trilaterate(double[][] positions, double[] distances) {
+    public static int[] trilaterate(double[][] positions, double[] distances) {
         TrilaterationFunction trilaterationFunction = new TrilaterationFunction(positions, distances);
 
         NonLinearLeastSquaresSolver nlSolver = new NonLinearLeastSquaresSolver(trilaterationFunction, new LevenbergMarquardtOptimizer());
@@ -427,7 +422,8 @@ public class TrilaterationData extends AppCompatActivity {
             centroidInt[i] = (int) centroid[i];
         }
 
-        userLocation.setLocation(centroidInt);
+        return centroidInt;
+        //userLocation.setLocation(centroidInt);
     }
 
 }

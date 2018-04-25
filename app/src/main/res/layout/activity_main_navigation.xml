@@ -30,7 +30,7 @@
 
     <Spinner
         android:id="@+id/spinner1"
-        android:layout_width="133dp"
+        android:layout_width="154dp"
         android:layout_height="48dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -41,7 +41,7 @@
 
     <Spinner
         android:id="@+id/spinner2"
-        android:layout_width="134dp"
+        android:layout_width="161dp"
         android:layout_height="48dp"
         android:layout_marginLeft="8dp"
         android:layout_marginStart="8dp"
@@ -69,7 +69,7 @@
         android:id="@+id/button2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="Button2"
+        android:onClick="updateCoordinates"
         android:text="Update Coordinates"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -141,7 +141,7 @@
         app:layout_constraintVertical_bias="0.411" />
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/userCoord"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"

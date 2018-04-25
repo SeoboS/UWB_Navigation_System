@@ -113,8 +113,12 @@ public class StartMenu extends AppCompatActivity {
 
     public void getData(View v){
         Intent i = new Intent(this, TrilaterationData.class);
+        info = "DSD TECH HC-05\n00:14:03:06:54:37";
+        String deviceName = "DSD TECH HC-05";
+        address = "00:14:03:06:54:37";
+        i.putExtra("deviceName",deviceName);
         i.putExtra("info",info);
-        i.putExtra("remoteBTAddress",address);
+        i.putExtra("address",address);
         startActivity(i);
     }
 

@@ -93,7 +93,7 @@ public class DeviceList extends AppCompatActivity {
 
             if (remote != null) {
                 // send address and start bluetooth service
-                Intent i = new Intent(DeviceList.this, TrilaterationData.class);
+                Intent i = new Intent(DeviceList.this, NaviActivity.class);
                 i.putExtra("deviceName",deviceName);
                 i.putExtra("address",address);
                 i.setAction(Intent.ACTION_SEND);
