@@ -6,9 +6,9 @@ public interface Constants {
     public static final String ADDR_ANCH_1 = "4369", ADDR_ANCH_2 = "8738", ADDR_ANCH_3 = "13107";
 
     public static final double[][] FIXED_ANCHOR_POSITIONS = {
-            {0.0, 0.0},
-            {200,0.0},
-            {200,200} };
+            {1360, 2230},
+            {1080, 2230},
+            {1010, 420 } };
     /*
                x
                |

@@ -393,14 +393,14 @@ public class BluetoothCoordinateService extends Service {
                             temp = "No properly delimited packets found";
                             buffer = temp.toString().getBytes();
                             bytes = temp.toString().getBytes().length;
-                            mHandler.obtainMessage(Constants.MESSAGE_TOAST, bytes, -1, buffer)
-                                    .sendToTarget();
+//                            mHandler.obtainMessage(Constants.MESSAGE_TOAST, bytes, -1, buffer)
+//                                    .sendToTarget();
                         } catch (Exception e) {
                             //textStatus.setText(e.toString());
                             buffer = e.toString().getBytes();
                             bytes = e.toString().getBytes().length;
-                            mHandler.obtainMessage(Constants.MESSAGE_TOAST, bytes, -1, buffer)
-                                    .sendToTarget();
+//                            mHandler.obtainMessage(Constants.MESSAGE_TOAST, bytes, -1, buffer)
+//                                    .sendToTarget();
                         }
                     } else {
 

@@ -470,13 +470,13 @@ public class MainNavigation implements Serializable{
 
     public int findVertex(int x, int y)
     {
-        if(x >= 0 && x < 1000 && y >= 0 && y < 800)
+        if(x >= 0 && x < 1000 && y >= 0 && y < 1100)
             return 0;
-        if(x >= 0 && x < 1000 && y >= 880 && y < 1500)
+        if(x >= 0 && x < 1000 && y >= 1100 && y < 1700)
             return 1;
-        if(x >= 0 && x < 1000 && y >= 15 && y < 1900)
+        if(x >= 0 && x < 1000 && y >= 1700 && y < 2300)
             return 2;
-        if(x >= 0 && x < 1000 && y >= 1900 && y < 2800)
+        if(x >= 0 && x < 1000 && y >= 2300 && y < 2800)
             return 3;
         if(x >= 0 && x < 400 && y >= 2800 && y < 3100)
             return 4;

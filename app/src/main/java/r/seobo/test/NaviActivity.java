@@ -226,17 +226,20 @@ public class NaviActivity extends AppCompatActivity {
     public void Button1(View v) {
         TextView t1 = (TextView) findViewById(R.id.textView1);
         TextView t2 = (TextView) findViewById(R.id.textView2);
-        EditText e1 = (EditText)findViewById(R.id.editText1);
-        EditText e2 = (EditText)findViewById(R.id.editText2);
+//        EditText e1 = (EditText)findViewById(R.id.editText1);
+//        EditText e2 = (EditText)findViewById(R.id.editText2);
 
-        //Spinner spinner1 = (Spinner) findViewById(R.id.spinner1);
-        //Spinner spinner2 = (Spinner) findViewById(R.id.spinner2);
-        if (e1.getText().toString() == "" || e2.getText().toString() == "" ) {
-            t1.setText("Enter a start and destination");
-        }
-        else{
-            int int1 = Integer.parseInt(e1.getText().toString());
-            int int2 = Integer.parseInt(e2.getText().toString());
+
+        Spinner spinner1 = (Spinner) findViewById(R.id.spinner1);
+        Spinner spinner2 = (Spinner) findViewById(R.id.spinner2);
+        int int1 = spinner1.getSelectedItemPosition();
+        int int2 = spinner2.getSelectedItemPosition();
+//        if (e1.getText().toString() == "" || e2.getText().toString() == "" ) {
+//            t1.setText("Enter a start and destination");
+//        }
+//        else{
+//            int int1 = Integer.parseInt(e1.getText().toString());
+//            int int2 = Integer.parseInt(e2.getText().toString());
             if(int1 >40 || int1<0 || int2>40 || int2<0) {
                 t1.setText("Invalid selection");
                 return;
@@ -246,7 +249,7 @@ public class NaviActivity extends AppCompatActivity {
             N1.setCurrentPath(int1, int2);
             t2.setText(N1.pathToString() + "\n" + N1.stepToString());
             destSet = true;
-        }
+//        }
     }
 
     //RENAMED FROM BUTTON2 TO UPDATECOORDINATES
