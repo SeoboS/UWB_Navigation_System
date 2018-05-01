@@ -17,11 +17,17 @@ import android.widget.TextView;
 import android.content.Intent;
 import android.widget.Toast;
 
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.PointsGraphSeries;
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
 import com.lemmingapex.trilateration.TrilaterationFunction;
 
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 import static r.seobo.test.Constants.ADDR_ANCH_1;
 import static r.seobo.test.Constants.ADDR_ANCH_2;
@@ -36,6 +42,7 @@ public class NaviActivity extends AppCompatActivity {
 
     private MainNavigation N1;
     private UserLocation userLocation;
+    private static final String TAG = "MY_APP_DEBUG_TAG";
 
 
     private BluetoothAdapter myBluetooth;
@@ -46,6 +53,11 @@ public class NaviActivity extends AppCompatActivity {
     private boolean destSet;
 
     private Double distAnch1 = -2.0, distAnch2 = -2.0, distAnch3 = -2.0;
+
+
+    PointsGraphSeries<DataPoint> series2;
+    private ArrayList<XYValue> xyValueArray;
+    private static final int MAX_COORDS_ON_GRAPH = 15;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +74,34 @@ public class NaviActivity extends AppCompatActivity {
 
         // if this came from the devicelist screen, then it will have a bundle. If had arrived to navigation activity via the start menu, there will be no bundle
         if (i.getExtras() != null) {
+//
+//            final GraphView graph = (GraphView) findViewById(R.id.graph);
+//            graph.getViewport().setYAxisBoundsManual(false);
+//            graph.getViewport().setXAxisBoundsManual(false);
+//            graph.getViewport().setScrollable(true);
+//            graph.getViewport().setScrollableY(true);
+//            graph.getViewport().setScalableY(true);
+//            graph.getViewport().setScalable(true);
+
+//            PointsGraphSeries<DataPoint> series = new PointsGraphSeries<>( new DataPoint[] {
+//                    new DataPoint(FIXED_ANCHOR_POSITIONS[0][0], FIXED_ANCHOR_POSITIONS[0][1]),
+//                    new DataPoint(FIXED_ANCHOR_POSITIONS[1][0], FIXED_ANCHOR_POSITIONS[1][1]),
+//                    new DataPoint(FIXED_ANCHOR_POSITIONS[2][0], FIXED_ANCHOR_POSITIONS[2][1])
+//            }
+//            );
+//
+//            PointsGraphSeries<DataPoint> series = new PointsGraphSeries<>( new DataPoint[] {
+//                    new DataPoint(FIXED_ANCHOR_POSITIONS[2][0], FIXED_ANCHOR_POSITIONS[2][1]),
+//                    new DataPoint(FIXED_ANCHOR_POSITIONS[1][0], FIXED_ANCHOR_POSITIONS[1][1]),
+//                    new DataPoint(FIXED_ANCHOR_POSITIONS[0][0], FIXED_ANCHOR_POSITIONS[0][1])
+//            }
+//            );
+//
+//            graph.addSeries(series);
+//            xyValueArray = new ArrayList<>(MAX_COORDS_ON_GRAPH);
+//            series2 = new PointsGraphSeries<>();
+
+
             deviceName = i.getStringExtra("deviceName");
             address = i.getStringExtra("address");
 
@@ -74,11 +114,36 @@ public class NaviActivity extends AppCompatActivity {
             userLocation.setListener(new UserLocation.ChangeListener() {
                 @Override
                 public void onChange() {
-                    String temp = String.format("x: %d, y: %d\n", userLocation.getLocation()[0], userLocation.getLocation()[1]);
-                    userCoord.setText(temp);
-                    if (destSet) {
-                        updateCoordinates(userLocation.getLocation()[0], userLocation.getLocation()[1]);
-                    }
+                        String temp = String.format("x: %d, y: %d\n", userLocation.getLocation()[0], userLocation.getLocation()[1]);
+                        userCoord.setText(temp);
+//
+//                        if (xyValueArray.size() >= MAX_COORDS_ON_GRAPH) {
+//                            xyValueArray.clear();
+//                            graph.removeSeries(series2);
+//                            series2 = new PointsGraphSeries<>();
+//                            //xyValueArray.remove(0);
+//                        }
+//                        xyValueArray.add(new XYValue(userLocation.getLocation()[0], userLocation.getLocation()[1]));
+//                        Collections.sort(xyValueArray);
+//                        for(int i = 0;i <xyValueArray.size(); i++){
+//                            try{
+//                                double x = xyValueArray.get(i).getX();
+//                                double y = xyValueArray.get(i).getY();
+//                                series2.appendData(new DataPoint(x,y),false, MAX_COORDS_ON_GRAPH);
+//                            }catch (IllegalArgumentException e){
+//
+//                                Log.e(TAG, "createScatterPlot: IllegalArgumentException: " + e.getMessage() );
+//                                String arr = "";
+//                                for ( int j = 0; j < xyValueArray.size(); j++){
+//                                    arr = arr.concat(xyValueArray.get(j).toString());
+//                                }
+//                                Log.d(TAG,arr);
+//                            }
+//                        }
+                        if (destSet) {
+                            updateCoordinates((int) userLocation.getLocation()[0], (int) userLocation.getLocation()[1]);
+                        }
+//                        graph.addSeries(series2);
                 }
             });
         }

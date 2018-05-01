@@ -32,13 +32,10 @@
         <activity
             android:name=".DeviceList"
             android:label="@string/title_activity_device_list"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar" /><![CDATA[
 
-        <service
-            android:name=".BluetoothConnectionService"
-            android:enabled="true"
-            android:exported="true"></service>
         >
+        ]]>
         <service
             android:name=".BluetoothCoordinateService"
             android:enabled="true"
